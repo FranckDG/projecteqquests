@@ -15,9 +15,8 @@ function event_say(e)
 end
 
 function event_trade(e)
-	local item_lib = require("items");
-	if(e.other:IsTaskActivityActive(2244,1)) then
-		if (item_lib.check_turn_in(e.trade, {item1 = 16875})) then
+	if (e.other:IsTaskActivityActive(2244,1) or e.other:IsTaskCompleted(2244)) then
+		if (eq.handin({[16875] = 1})) then
 			e.self:Say("That looks very good! Here are the books you will need to learn Tinkering Mastery.");
 			e.other:SummonItem(98471); -- Item: Mastering Tinkering Mastery I
 			e.other:SummonItem(98472); -- Item: Mastering Tinkering Mastery II
@@ -25,5 +24,4 @@ function event_trade(e)
 			e.other:UpdateTaskActivity(2244, 1, 1);
 		end
 	end
-	item_lib.return_items(e.self, e.other, e.trade)
 end
