@@ -29,3 +29,53 @@ function event_spawn(e)
         end
     end
 end
+
+-- ---------------------------------------------------------------------------
+-- AI Raid: era ladder gate bosses.
+--
+-- Killing one of these leaves a breadcrumb in data_buckets. It deliberately
+-- does nothing else, because a quest script cannot do the unlock itself:
+-- eq.set_rule() resolves to RuleManager::SetRule(name, value) with the default
+-- db=nullptr, db_save=false, so it is in-memory and zone-local - killing
+-- Trakanon in Sebilis would open Velious for that one zone process and forget
+-- it on restart. There is also no SQL binding in the quest API.
+--
+-- The controller (assets/era/airaid-era.sh, run every minute by cron in the
+-- eqemu-server container) reads these breadcrumbs, decides whether a tier is
+-- complete, and writes the unlock to rule_values, which IS persistent and
+-- server-wide.
+--
+-- This lives in global_npc.lua rather than in seven per-boss scripts because
+-- QuestParserCollection::EventNPC calls EventNPCLocal, EventNPCGlobal and
+-- DispatchEventNPC unconditionally - the global fires for every NPC death,
+-- whether or not that NPC has a script of its own. One file, and no PEQ file
+-- is modified, so upstream merges stay clean.
+--
+-- Ids mirror the airaid_era_triggers table in the server repo. Retuning the
+-- ladder means updating both.
+-- ---------------------------------------------------------------------------
+local airaid_gate_bosses = eq.Set {
+    32040,   -- Lord Nagafen         tier 1  (with Lady Vox)
+    73057,   -- Lady Vox             tier 1  (with Lord Nagafen)
+    89154,   -- Trakanon             tier 2
+    124155,  -- Vulak`Aerr           tier 3
+    162227,  -- Emperor Ssraeshza    tier 4
+    223201,  -- Quarm                tier 5
+    317109,  -- Overlord Mata Muram  tier 6
+}
+
+function event_death_complete(e)
+    local npc_type_id = e.self:GetNPCTypeID()
+
+    if (airaid_gate_bosses[npc_type_id] == nil) then
+        return
+    end
+
+    local killer = "unknown"
+    if (e.other and e.other.valid) then
+        killer = e.other:GetCleanName()
+    end
+
+    eq.set_data("airaid:kill:" .. npc_type_id, killer)
+    eq.debug("[airaid] gate boss " .. npc_type_id .. " killed by " .. killer)
+end
