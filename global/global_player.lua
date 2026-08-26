@@ -22,9 +22,28 @@ local airaid_era_generation = ""
 local function airaid_refresh_era()
 	local generation = eq.get_data("airaid:era_generation")
 
-	if generation ~= "" and generation ~= airaid_era_generation then
-		airaid_era_generation = generation
-		eq.reloadzonestaticdata()
+	if generation == "" or generation == airaid_era_generation then
+		return
+	end
+
+	-- The first generation a zone sees is just a sync, not news. Without this a
+	-- server restart would announce an unlock that happened days ago.
+	local first_sync = (airaid_era_generation == "")
+
+	airaid_era_generation = generation
+	eq.reloadzonestaticdata()
+
+	if not first_sync then
+		local label = eq.get_data("airaid:era_label")
+
+		if label ~= "" then
+			-- zone_emote, not world_emote: each zone announces to its own players
+			-- exactly once as it catches up. world_emote from every zone would
+			-- spam, and a "first zone announces" guard would race across zones.
+			-- This also means the message lands precisely when the unlock becomes
+			-- true for that player.
+			eq.zone_emote(MT.Yellow, "The world shifts. " .. label .. " is now open.")
+		end
 	end
 end
 
