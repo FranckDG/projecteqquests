@@ -21,6 +21,7 @@ local airaid_era = require("airaid_era")
 
 function event_enter_zone(e)
 	airaid_era.refresh()
+	airaid_era.apply_bot_limit(e.self)
 	mysterious_voice(e)
 
 	if eq.is_lost_dungeons_of_norrath_enabled() and eq.get_zone_short_name() == "lavastorm" and e.self:GetGMStatus() >= 80 then 
@@ -302,6 +303,7 @@ vet_aa = {
 
 function event_connect(e)
 	airaid_era.refresh()
+	airaid_era.apply_bot_limit(e.self)
 	grant_veteran_aa(e)
 	don.fix_invalid_faction_state(e.self)
 end
@@ -401,6 +403,7 @@ end
 ]]--
 
 function event_level_up(e)
+	airaid_era.apply_bot_limit(e.self)
   local free_skills =  {0,1,2,3,4,5,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,28,29,30,31,32,33,34,36,37,38,39,41,42,43,44,45,46,47,49,51,52,54,67,70,71,72,73,74,76};
 
   for k,v in ipairs(free_skills) do

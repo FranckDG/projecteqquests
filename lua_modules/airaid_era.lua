@@ -107,6 +107,56 @@ function M.record_kill(npc_type_id, killer)
 	return true
 end
 
+
+-- ---------------------------------------------------------------------------
+-- How many bots may be ACTIVE at once.
+--
+-- During Classic the roster is earned by levelling. After Kunark opens it is
+-- earned by the ladder instead, and the server-wide Bots:SpawnLimit rule that
+-- the controller writes per tier takes over.
+--
+-- Client::GetBotSpawnLimit checks a per-character bot_spawn_limit data bucket
+-- BEFORE falling back to that rule, so Classic simply writes the bucket and
+-- everything after Classic deletes it.
+--
+-- This governs active bots only. Bots:CreationLimit stays at 150, so you can
+-- create, equip and swap as many as you like from level 1.
+--
+-- Levels are ascending and the last entry wins.
+-- ---------------------------------------------------------------------------
+local classic_roster = {
+	{ level =  3, bots =  1 },
+	{ level =  5, bots =  2 },
+	{ level = 10, bots =  3 },
+	{ level = 15, bots =  4 },
+	{ level = 20, bots =  5 },   -- you + 5 = a full group
+	{ level = 45, bots = 11 },   -- you + 11 = two groups
+	{ level = 48, bots = 17 },   -- you + 17 = three groups, the Classic ceiling
+}
+
+function M.apply_bot_limit(client)
+	if not client.valid then
+		return
+	end
+
+	-- Anything past Classic is governed by the tier rule, so clear the override.
+	if eq.get_data("airaid:era_expansion") ~= "0" then
+		client:DeleteBucket("bot_spawn_limit")
+		return
+	end
+
+	local level = client:GetLevel()
+	local bots  = 0
+
+	for _, step in ipairs(classic_roster) do
+		if level >= step.level then
+			bots = step.bots
+		end
+	end
+
+	client:SetBucket("bot_spawn_limit", tostring(bots))
+end
+
 function M.refresh()
 	local generation = eq.get_data("airaid:era_generation")
 
