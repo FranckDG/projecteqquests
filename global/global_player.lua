@@ -464,10 +464,12 @@ end
 -- against that zone's cached value. event_enter_zone refreshes the zone you
 -- ARRIVE in, which is the wrong end: it never helps the attempt in progress.
 --
--- EVENT_ZONE fires in the source zone at zoning.cpp:223, and the gate is at
--- ~348, so refreshing here lands before the check. A newly unlocked continent
--- is then reachable on the first attempt, instead of needing something to die
--- in whichever zone you happen to be standing in.
+-- EVENT_ZONE fires in the source zone at zoning.cpp:223 and the gate is at ~348,
+-- so in principle refreshing here lands before the check. In practice it does
+-- NOT reliably beat the gate - tested 2026-08-26 and a newly unlocked continent
+-- was still refused on the first attempt. Kept as a backstop because it is
+-- harmless and does refresh the zone, but do not rely on it: the dependable
+-- trigger is still an NPC death in the zone you are standing in.
 --
 -- Returns nothing on purpose: a non-zero return from EVENT_ZONE cancels the
 -- zone (zoning.cpp calls SendZoneCancel).
