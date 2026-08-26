@@ -9,6 +9,7 @@ commands["lockouts"]  = {  0, require(commands_path .. "lockouts") };
 commands["timeleft"]  = {  0, require(commands_path .. "time_left") };
 commands["hotzone"]   = {  0, require(commands_path .. "hotzone") };
 commands["hotzones"]  = {  0, require(commands_path .. "hotzone") };
+commands["akill"]     = { 80, require(commands_path .. "airaid_kill") };
 
 function eq.DispatchCommands(e)
 	local command = commands[e.command];
