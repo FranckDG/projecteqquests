@@ -31,3 +31,22 @@ They cannot do the unlock. `eq.set_rule()` resolves to `RuleManager::SetRule(nam
 ## Gotcha
 
 This checkout has **CRLF** line endings on Windows. `perl`/`sed` patterns using bare `\n` silently match nothing.
+
+## Validate Lua by LOADING it, not with `luac -p`
+
+`luac -p` only checks syntax. A file can be perfectly valid and still fail the moment it executes — which is exactly what happened when a splice-based edit deleted `local M = {}` from `airaid_era.lua`. The module failed at load with *"attempt to index global 'M'"*, and because both global scripts `require` it, one missing line silently killed **every** Lua hook in the zone: `#akill`, PEQ's own `#hotzone` (`event_command` lives in `global_player.lua`), the era refresh, and gate boss kill recording.
+
+After any edit, load it and check the exports:
+
+```bash
+docker compose exec eqemu-server bash -lc 'cd ~/server/lua_modules && lua -e "
+  eq = setmetatable({}, {__index=function() return function() return \"\" end end})
+  MT = setmetatable({}, {__index=function() return 0 end})
+  local m = assert(loadfile(\"airaid_era.lua\"))()
+  print(type(m.record_kill), type(m.refresh))
+"'
+```
+
+Two things make this failure mode nasty: there are **no zone logs on this install**, so the Lua error is invisible, and the symptom appears far from the cause — a broken module looks like "the command framework is broken".
+
+Note `bit` is missing from standalone `lua` but present in EQEmu's embedded interpreter, so `dragons_of_norrath.lua` fails to load in a bare test. Stub `bit` if you need to test something that pulls it in.
