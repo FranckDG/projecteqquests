@@ -2,7 +2,34 @@
 
 local don = require("dragons_of_norrath")
 
+-- ---------------------------------------------------------------------------
+-- AI Raid: pull the era forward when it changes.
+--
+-- The zone gate reads WorldContentService::GetCurrentExpansion(), a cache that
+-- a plain rules reload does not refresh. The one call that refreshes it is
+-- Zone::ReloadStaticData, exposed here as eq.reloadzonestaticdata().
+--
+-- The era controller stamps airaid:era_generation on every unlock. Each zone
+-- compares it against a zone-local cache and refreshes itself once.
+--
+-- Hooked to entering a zone and to connecting, because those are things a
+-- player does deliberately. An earlier version only refreshed on an NPC death
+-- in the zone, which meant standing still after an unlock left the zone stale
+-- and the newly opened continent unreachable.
+-- ---------------------------------------------------------------------------
+local airaid_era_generation = ""
+
+local function airaid_refresh_era()
+	local generation = eq.get_data("airaid:era_generation")
+
+	if generation ~= "" and generation ~= airaid_era_generation then
+		airaid_era_generation = generation
+		eq.reloadzonestaticdata()
+	end
+end
+
 function event_enter_zone(e)
+	airaid_refresh_era()
 	mysterious_voice(e)
 
 	if eq.is_lost_dungeons_of_norrath_enabled() and eq.get_zone_short_name() == "lavastorm" and e.self:GetGMStatus() >= 80 then 
@@ -283,6 +310,7 @@ vet_aa = {
 
 
 function event_connect(e)
+	airaid_refresh_era()
 	grant_veteran_aa(e)
 	don.fix_invalid_faction_state(e.self)
 end
