@@ -17,17 +17,39 @@
 -- the two globals each kept a local copy they took separate "first sync"
 -- passes, and the first mob death after entering a zone never announced.
 --
--- The tier table mirrors airaid_era_tiers / airaid_era_triggers in the server
--- repo. Retuning the ladder means editing both.
-local M = {}
-
+-- The ladder, mirroring airaid_era_tiers / airaid_era_triggers in the server
+-- repo. Labels must match airaid_era_tiers.label exactly: the kill-progress
+-- line is named from here, the unlock line from the database, and if they
+-- drift the same unlock gets announced under two different names.
+--
+-- Tiers 4 and 5 bundle a small expansion each, and the labels say so: killing
+-- Emperor Ssraeshza opens Ykesha alongside Planes of Power, and Quarm opens
+-- Gates of Discord alongside Lost Dungeons of Norrath.
 local tiers = {
-	{ label = "The Ruins of Kunark",      bosses = { [32040]  = "Lord Nagafen", [73057] = "Lady Vox" } },
-	{ label = "The Scars of Velious",     bosses = { [89154]  = "Trakanon" } },
-	{ label = "The Shadows of Luclin",    bosses = { [124155] = "Vulak`Aerr" } },
-	{ label = "Planes of Power",          bosses = { [162227] = "Emperor Ssraeshza" } },
-	{ label = "Lost Dungeons of Norrath", bosses = { [223201] = "Quarm" } },
-	{ label = "Omens of War",             bosses = { [317109] = "Overlord Mata Muram" } },
+	{
+		label  = "The Ruins of Kunark",
+		bosses = { [32040] = "Lord Nagafen", [73057] = "Lady Vox" },
+	},
+	{
+		label  = "The Scars of Velious",
+		bosses = { [89154] = "Trakanon" },
+	},
+	{
+		label  = "The Shadows of Luclin",
+		bosses = { [124155] = "Vulak`Aerr" },
+	},
+	{
+		label  = "The Planes of Power and the Legacy of Ykesha",
+		bosses = { [162227] = "Emperor Ssraeshza" },
+	},
+	{
+		label  = "Lost Dungeons of Norrath and the Gates of Discord",
+		bosses = { [223201] = "Quarm" },
+	},
+	{
+		label  = "Omens of War",
+		bosses = { [317109] = "Overlord Mata Muram" },
+	},
 }
 
 local era_generation = ""
@@ -63,14 +85,23 @@ function M.record_kill(npc_type_id, killer)
 		end
 	end
 
-	if done >= total then
-		eq.zone_emote(MT.Yellow, fallen .. " has fallen. " .. tier.label .. " will open shortly.")
-	else
-		eq.zone_emote(
-			MT.Yellow,
-			fallen .. " has fallen. " .. tier.label .. " - " .. done .. " of " .. total .. "."
-		)
+	-- Lead with the era, then the kill. Putting the label first avoids both
+	-- "The way to The Ruins of Kunark" and the verb disagreement the bundled
+	-- tiers cause ("...and the Gates of Discord IS now open"). The count only
+	-- appears when a tier actually needs more than one kill.
+	--
+	-- Plain ASCII: this renders in a 2013 client.
+	local progress = tier.label .. " - " .. fallen .. " has fallen."
+
+	if total > 1 then
+		progress = progress .. " " .. done .. " of " .. total .. "."
 	end
+
+	if done >= total then
+		progress = progress .. " The way opens shortly."
+	end
+
+	eq.zone_emote(MT.Yellow, progress)
 
 	return true
 end
@@ -99,7 +130,7 @@ function M.refresh()
 		if label ~= "" then
 			-- zone_emote, not world_emote: each zone tells its own players once as
 			-- it catches up, so no spam and no cross-zone race.
-			eq.zone_emote(MT.Yellow, "The world shifts. " .. label .. " is now open.")
+			eq.zone_emote(MT.Yellow, "The world shifts. Now open: " .. label .. ".")
 		end
 	end
 end
