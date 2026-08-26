@@ -64,7 +64,35 @@ local airaid_gate_bosses = eq.Set {
     317109,  -- Overlord Mata Muram  tier 6
 }
 
+-- Zone-local cache of the era "generation" the controller stamps on each unlock.
+-- Each zone process has its own Lua state, so this persists for that zone.
+local airaid_era_generation = ""
+
+-- Pull the era forward without anyone typing a command.
+--
+-- The zone gate in zoning.cpp reads WorldContentService::GetCurrentExpansion(),
+-- a cache that a plain rules reload does NOT refresh - LoadRules updates the
+-- rule manager only. The one call that refreshes both is
+-- SetExpansionContext()->ReloadContentFlags(), which is what Zone::ReloadStaticData
+-- does, and that is exposed here as eq.reloadzonestaticdata().
+--
+-- So each zone refreshes itself the first time an NPC dies in it after an
+-- unlock. Nothing else in the engine gives an external process a way to push a
+-- global reload: the world console has no rules reload, there is no world CLI
+-- for it, and the API route lives behind Spire auth.
+local function airaid_refresh_era()
+    local generation = eq.get_data("airaid:era_generation")
+
+    if (generation ~= "" and generation ~= airaid_era_generation) then
+        airaid_era_generation = generation
+        eq.reloadzonestaticdata()
+        eq.debug("[airaid] era generation " .. generation .. " - reloaded zone static data")
+    end
+end
+
 function event_death_complete(e)
+    airaid_refresh_era()
+
     local npc_type_id = e.self:GetNPCTypeID()
 
     if (airaid_gate_bosses[npc_type_id] == nil) then
