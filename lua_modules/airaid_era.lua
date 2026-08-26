@@ -16,15 +16,16 @@
 -- caches per Lua state: every hook in a zone shares ONE generation cache. When
 -- the two globals each kept a local copy they took separate "first sync"
 -- passes, and the first mob death after entering a zone never announced.
---
--- The ladder, mirroring airaid_era_tiers / airaid_era_triggers in the server
--- repo. Labels must match airaid_era_tiers.label exactly: the kill-progress
--- line is named from here, the unlock line from the database, and if they
--- drift the same unlock gets announced under two different names.
+-- The tier table mirrors airaid_era_tiers / airaid_era_triggers in the server
+-- repo. Labels must match airaid_era_tiers.label exactly: the kill-progress line
+-- is named from here and the unlock line from the database, and if they drift
+-- the same unlock gets announced under two different names.
 --
 -- Tiers 4 and 5 bundle a small expansion each, and the labels say so: killing
 -- Emperor Ssraeshza opens Ykesha alongside Planes of Power, and Quarm opens
 -- Gates of Discord alongside Lost Dungeons of Norrath.
+local M = {}
+
 local tiers = {
 	{
 		label  = "The Ruins of Kunark",
