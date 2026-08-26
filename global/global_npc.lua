@@ -99,9 +99,13 @@ function event_death_complete(e)
         return
     end
 
+    -- e.other is NOT the killer here - on a real kill it arrived as the dying
+    -- NPC itself. The handler passes a separate e.killer_id entity id, which is
+    -- the reliable one.
     local killer = "unknown"
-    if (e.other and e.other.valid) then
-        killer = e.other:GetCleanName()
+    local killer_mob = eq.get_entity_list():GetMobID(e.killer_id)
+    if (killer_mob.valid) then
+        killer = killer_mob:GetCleanName()
     end
 
     eq.set_data("airaid:kill:" .. npc_type_id, killer)
