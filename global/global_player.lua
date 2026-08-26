@@ -455,3 +455,23 @@ end
 function event_task_complete(e)
   don.on_task_complete(e.self, e.task_id)
 end
+
+-- ---------------------------------------------------------------------------
+-- AI Raid: refresh the era on the way OUT of a zone.
+--
+-- The expansion gate is evaluated in the zone you are LEAVING -
+-- Handle_OP_ZoneChange runs there and compares the target zone's expansion
+-- against that zone's cached value. event_enter_zone refreshes the zone you
+-- ARRIVE in, which is the wrong end: it never helps the attempt in progress.
+--
+-- EVENT_ZONE fires in the source zone at zoning.cpp:223, and the gate is at
+-- ~348, so refreshing here lands before the check. A newly unlocked continent
+-- is then reachable on the first attempt, instead of needing something to die
+-- in whichever zone you happen to be standing in.
+--
+-- Returns nothing on purpose: a non-zero return from EVENT_ZONE cancels the
+-- zone (zoning.cpp calls SendZoneCancel).
+-- ---------------------------------------------------------------------------
+function event_zone(e)
+	airaid_era.refresh()
+end
