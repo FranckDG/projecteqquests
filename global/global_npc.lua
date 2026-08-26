@@ -33,63 +33,39 @@ end
 -- ---------------------------------------------------------------------------
 -- AI Raid: era ladder gate bosses.
 --
--- Killing one of these leaves a breadcrumb in data_buckets. It deliberately
--- does nothing else, because a quest script cannot do the unlock itself:
--- eq.set_rule() resolves to RuleManager::SetRule(name, value) with the default
--- db=nullptr, db_save=false, so it is in-memory and zone-local - killing
--- Trakanon in Sebilis would open Velious for that one zone process and forget
--- it on restart. There is also no SQL binding in the quest API.
+-- The ladder itself, the breadcrumb, the progress message and the era refresh
+-- all live in lua_modules/airaid_era.lua, so this file and global_player.lua
+-- share one generation cache. A copy in each meant each took its own silent
+-- "first sync", and the first mob death in a zone never announced.
 --
--- The controller (assets/era/airaid-era.sh, run every minute by cron in the
--- eqemu-server container) reads these breadcrumbs, decides whether a tier is
--- complete, and writes the unlock to rule_values, which IS persistent and
--- server-wide.
+-- Quest scripts cannot do the unlock: eq.set_rule() resolves to
+-- RuleManager::SetRule(name, value) with db=nullptr, db_save=false, so it is
+-- in-memory and zone-local, and there is no SQL binding in the quest API.
+-- data_buckets is the only persistence available, so the controller
+-- (assets/era/airaid-era.sh, cron) decides and applies.
 --
--- This lives in global_npc.lua rather than in seven per-boss scripts because
+-- Hooked here rather than in seven per-boss scripts because
 -- QuestParserCollection::EventNPC calls EventNPCLocal, EventNPCGlobal and
 -- DispatchEventNPC unconditionally - the global fires for every NPC death,
--- whether or not that NPC has a script of its own. One file, and no PEQ file
--- is modified, so upstream merges stay clean.
---
--- Ids mirror the airaid_era_triggers table in the server repo. Retuning the
--- ladder means updating both.
+-- whether or not that NPC has a script of its own. Three of the seven have no
+-- script at all and one is #Vulak-Aerr.pl, so per-boss files would have meant
+-- creating some and editing others, each a future merge conflict.
 -- ---------------------------------------------------------------------------
-local airaid_gate_bosses = eq.Set {
-    32040,   -- Lord Nagafen         tier 1  (with Lady Vox)
-    73057,   -- Lady Vox             tier 1  (with Lord Nagafen)
-    89154,   -- Trakanon             tier 2
-    124155,  -- Vulak`Aerr           tier 3
-    162227,  -- Emperor Ssraeshza    tier 4
-    223201,  -- Quarm                tier 5
-    317109,  -- Overlord Mata Muram  tier 6
-}
-
--- Zone-local cache of the era "generation" the controller stamps on each unlock.
--- Each zone process has its own Lua state, so this persists for that zone.
--- Shared with global_player.lua via require(), so both hooks use ONE generation
--- cache per zone. Keeping a local copy in each file meant each took its own
--- silent "first sync", and the first mob death after entering a zone never
--- announced.
 local airaid_era = require("airaid_era")
 
 function event_death_complete(e)
-    airaid_era.refresh()
+	airaid_era.refresh()
 
-    local npc_type_id = e.self:GetNPCTypeID()
+	-- e.other is NOT the killer here - it arrives as the dying NPC itself, and
+	-- under #kill it genuinely is: Mob::Kill() calls Death(this, ...), passing
+	-- the mob as its own killer. e.killer_id is the reliable field. Use #akill
+	-- for a GM instakill that credits you properly.
+	local killer = "unknown"
+	local killer_mob = eq.get_entity_list():GetMobID(e.killer_id)
 
-    if (airaid_gate_bosses[npc_type_id] == nil) then
-        return
-    end
+	if killer_mob.valid then
+		killer = killer_mob:GetCleanName()
+	end
 
-    -- e.other is NOT the killer here - on a real kill it arrived as the dying
-    -- NPC itself. The handler passes a separate e.killer_id entity id, which is
-    -- the reliable one.
-    local killer = "unknown"
-    local killer_mob = eq.get_entity_list():GetMobID(e.killer_id)
-    if (killer_mob.valid) then
-        killer = killer_mob:GetCleanName()
-    end
-
-    eq.set_data("airaid:kill:" .. npc_type_id, killer)
-    eq.debug("[airaid] gate boss " .. npc_type_id .. " killed by " .. killer)
+	airaid_era.record_kill(e.self:GetNPCTypeID(), killer)
 end
