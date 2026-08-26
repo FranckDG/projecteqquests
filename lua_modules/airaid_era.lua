@@ -32,15 +32,15 @@ local tiers = {
 	},
 	{
 		label  = "The Scars of Velious",
-		bosses = { [89154] = "Trakanon" },
+		bosses = { [89154] = "Trakanon", [108048] = "Phara Dar" },
 	},
 	{
 		label  = "The Shadows of Luclin",
-		bosses = { [124155] = "Vulak`Aerr" },
+		bosses = { [124155] = "Vulak`Aerr", [124103] = "Lord Koi`Doken" },
 	},
 	{
 		label  = "The Planes of Power and the Legacy of Ykesha",
-		bosses = { [162227] = "Emperor Ssraeshza" },
+		bosses = { [162227] = "Emperor Ssraeshza", [158007] = "Aten Ha Ra" },
 	},
 	{
 		label  = "Lost Dungeons of Norrath and the Gates of Discord",
