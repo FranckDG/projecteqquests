@@ -1,7 +1,10 @@
--- airaid_bridge - server-side command queue drain. SPIKE, see #abridge.
+-- airaid_bridge - server-side command queue drain.
 --
--- The deck needs to make a bot command run as the player without MacroQuest.
--- Dispatch is solved (client:SendGMCommand("#bot X") -> bot_command_dispatch, see
+-- VALIDATED end to end 2026-08-29: a command sent from a process outside the game
+-- executed as the player, no MacroQuest involved. Full write-up, including the
+-- limits against MQ, is in eq-ai-raid-deck/docs/bridge-decision.md.
+--
+-- Dispatch is client:SendGMCommand("#bot X") -> bot_command_dispatch (see
 -- commands/airaid_bridge.lua). This is the other half: getting a command from a
 -- web request into the zone process, which nothing outside the game can call
 -- into.
@@ -74,9 +77,17 @@ function bridge.on_timer(e)
 	-- enforces ownership and every other rule on its own.
 	local ok = e.self:SendGMCommand("#bot " .. pending)
 
-	-- The ack is what the deck polls to learn the command was consumed. It says
-	-- "dispatched", not "succeeded" - the deck re-reads authoritative state from
-	-- the database after a mutation, which is what actually confirms an effect.
+	-- The ack says the queue was drained. It says nothing else, and measurement
+	-- proved that: queueing "definitelynotacommand" also acks "ok", because
+	-- SendGMCommand reports whether *#bot* dispatched, and #bot dispatches fine
+	-- before handing an unknown name to the bot parser, which then complains in
+	-- the player's chat where we cannot see it.
+	--
+	-- So "ok" means delivered, never executed and never succeeded. Anything that
+	-- needs to know an effect happened must re-read authoritative state from the
+	-- database - which is what §4 already prescribes, and why this is a smaller
+	-- loss than it looks. Validating the command name before queueing is the
+	-- deck's job, and it now has the catalog to do it with.
 	eq.set_data(
 		BUCKET_ACK .. char_id,
 		string.format("%d|%s|%s", os.time(), ok and "ok" or "rejected", pending),
