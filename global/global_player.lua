@@ -18,10 +18,14 @@ local don = require("dragons_of_norrath")
 -- and the newly opened continent unreachable.
 -- ---------------------------------------------------------------------------
 local airaid_era = require("airaid_era")
+-- SPIKE: server-side command bridge. See lua_modules/airaid_bridge.lua and
+-- lua_modules/commands/airaid_bridge.lua. Remove both with this line.
+local airaid_bridge = require("airaid_bridge")
 
 function event_enter_zone(e)
 	airaid_era.refresh()
 	airaid_era.apply_bot_limit(e.self)
+	airaid_bridge.start(e.self)
 	mysterious_voice(e)
 
 	if eq.is_lost_dungeons_of_norrath_enabled() and eq.get_zone_short_name() == "lavastorm" and e.self:GetGMStatus() >= 80 then 
@@ -304,6 +308,7 @@ vet_aa = {
 function event_connect(e)
 	airaid_era.refresh()
 	airaid_era.apply_bot_limit(e.self)
+	airaid_bridge.start(e.self)
 	grant_veteran_aa(e)
 	don.fix_invalid_faction_state(e.self)
 end
@@ -479,4 +484,18 @@ end
 -- ---------------------------------------------------------------------------
 function event_zone(e)
 	airaid_era.refresh()
+end
+
+-- ---------------------------------------------------------------------------
+-- SPIKE: server-side command bridge.
+--
+-- Timers are per-mob and a Client is a Mob, so eq.set_timer(name, ms, client)
+-- delivers EVENT_TIMER here for that player specifically. The handler ignores
+-- every timer that is not ours, so adding this costs nothing for players who
+-- never use the deck.
+--
+-- Remove with lua_modules/airaid_bridge.lua once the spike is answered.
+-- ---------------------------------------------------------------------------
+function event_timer(e)
+	airaid_bridge.on_timer(e)
 end
