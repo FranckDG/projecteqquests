@@ -71,7 +71,11 @@ local BUCKET_CURSOR = "airaid:cursor:"
 --- slotCharm=0 ... slotAmmo=22, slotGeneral1..10=23..32, slotCursor=33.
 local SLOT_CURSOR = 33
 
---- Publish what the player is holding: item id, or "0" for an empty hand.
+--- Publish what the player is holding: the item id, or -1 for an empty hand.
+---
+--- -1 is Client::GetItemIDAt returning INVALID_ID (0xFFFFFFFF) through an int32.
+--- It never returns 0 for an empty slot. The value is published raw and the deck
+--- normalises it, so this stays a dumb reporter of whatever the engine says.
 ---
 --- The deck has to refuse an item transfer unless the cursor is empty, and the
 --- reason is nastier than a failed command. The cursor is a FIFO — ItemInstQueue
