@@ -127,9 +127,9 @@ end
 local classic_roster = {
 	{ level =  3, bots =  1 },
 	{ level =  5, bots =  2 },
-	{ level = 10, bots =  3 },
-	{ level = 15, bots =  4 },
-	{ level = 20, bots =  5 },   -- you + 5 = a full group
+	{ level =  8, bots =  3 },
+	{ level = 10, bots =  4 },
+	{ level = 12, bots =  5 },   -- you + 5 = a full group
 	{ level = 45, bots = 11 },   -- you + 11 = two groups
 	{ level = 48, bots = 17 },   -- you + 17 = three groups, the Classic ceiling
 }
