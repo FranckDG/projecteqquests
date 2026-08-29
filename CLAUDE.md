@@ -10,9 +10,11 @@ The main project context is in the sibling repo **`eq-ai-raid-server/CLAUDE.md`*
 |---|---|
 | `lua_modules/airaid_era.lua` | The era ladder, zone side: records gate boss kills, announces tier progress, refreshes the zone when the controller unlocks something. |
 | `lua_modules/commands/airaid_kill.lua` | `#akill` — a GM instakill that credits the killer. Access 80. |
+| `lua_modules/airaid_bridge.lua` | The deck's write path: drains a queued bot command per connected client and dispatches it with `client:SendGMCommand`. Read `eq-ai-raid-deck/docs/bridge-decision.md` before touching it — two details break it silently. |
+| `lua_modules/commands/airaid_bridge.lua` | `#abridge` — dispatch a `^` command as yourself, or inspect the queue. Access 0. |
 | `global/global_npc.lua` | `event_death_complete` — new function, no upstream code touched. |
-| `global/global_player.lua` | One-line calls added to `event_enter_zone` and `event_connect`, plus a new `event_zone`. |
-| `lua_modules/command.lua` | One line registering `#akill`. |
+| `global/global_player.lua` | One-line calls added to `event_enter_zone` and `event_connect`, plus a new `event_zone` and `event_timer`. |
+| `lua_modules/command.lua` | One line each registering `#akill` and `#abridge`. |
 
 Everything else is upstream. Only `global_player.lua` and `command.lua` have upstream functions modified, and both are single-line inserts, so merges should stay manageable.
 
