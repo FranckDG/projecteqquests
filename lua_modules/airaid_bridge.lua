@@ -40,6 +40,25 @@ local TIMER = "airaid_bridge"
 local INTERVAL_MS = 1000
 local BUCKET_CMD = "airaid:cmd:"
 local BUCKET_ACK = "airaid:ack:"
+local BUCKET_HB = "airaid:hb:"
+
+-- Heartbeat cadence and lifetime.
+--
+-- Nothing outside the game can see who is connected: the deck could only queue a
+-- command and wait to find out, which meant a twelve second pause before it could
+-- say "is this character logged in?". This loop already runs once a second per
+-- connected client, so it is the one place that knows.
+--
+-- Written every 10s rather than every tick, because a write per client per second
+-- is real database traffic for a fact that changes on the scale of minutes. The
+-- 30s lifetime is three missed writes, so a zone crash or a hard disconnect shows
+-- as offline quickly without a clean logout being needed to clear it.
+local HB_EVERY_SECONDS = 10
+local HB_TTL = "30s"
+
+--- char_id -> os.time() of its last heartbeat write. Per zone Lua state, which is
+--- the same scope as the timers driving it.
+local last_heartbeat = {}
 
 --- Start the drain loop for one client. Idempotent - set_timer replaces.
 function bridge.start(client)
@@ -57,6 +76,16 @@ function bridge.on_timer(e)
 	end
 
 	local char_id = e.self:CharacterID()
+
+	-- Before anything else, and outside the pending check: presence has to be
+	-- reported whether or not there is work, since "nobody has sent me a command"
+	-- is exactly when the deck most wants to know you are reachable.
+	local now = os.time()
+	if (last_heartbeat[char_id] or 0) + HB_EVERY_SECONDS <= now then
+		last_heartbeat[char_id] = now
+		eq.set_data(BUCKET_HB .. char_id, tostring(now), HB_TTL)
+	end
+
 	local key = BUCKET_CMD .. char_id
 	local pending = eq.get_data(key)
 
