@@ -60,6 +60,28 @@ local HB_TTL = "30s"
 --- the same scope as the timers driving it.
 local last_heartbeat = {}
 
+local BUCKET_SPAWNED = "airaid:spawned:"
+
+--- Publish which of this character's bots are currently in the world.
+---
+--- `bot_data` records what EXISTS, never what is spawned — the zone holds that and
+--- the only command that reports it, ^botreport, answers into the player's chat
+--- where nothing server-side can read it. GetBotListByCharacterID is the entity
+--- list's own answer, so this is the real thing rather than an inference.
+---
+--- Written as bot ids because the deck already keys its roster by bot_id, and a
+--- name would need escaping the moment someone uses a comma.
+local function publish_spawned(char_id)
+	local ids = {}
+	local list = eq.get_entity_list():GetBotListByCharacterID(char_id)
+	for bot in list.entries do
+		ids[#ids + 1] = tostring(bot:GetBotID())
+	end
+	-- Same lifetime as the heartbeat: if the client stops reporting, its spawn
+	-- list must go stale with it rather than linger as a claim about the world.
+	eq.set_data(BUCKET_SPAWNED .. char_id, table.concat(ids, ","), HB_TTL)
+end
+
 --- Start the drain loop for one client. Idempotent - set_timer replaces.
 function bridge.start(client)
 	if client == nil or client.null then
@@ -84,6 +106,7 @@ function bridge.on_timer(e)
 	if (last_heartbeat[char_id] or 0) + HB_EVERY_SECONDS <= now then
 		last_heartbeat[char_id] = now
 		eq.set_data(BUCKET_HB .. char_id, tostring(now), HB_TTL)
+		publish_spawned(char_id)
 	end
 
 	local key = BUCKET_CMD .. char_id
@@ -122,6 +145,11 @@ function bridge.on_timer(e)
 		string.format("%d|%s|%s", os.time(), ok and "ok" or "rejected", pending),
 		"5m"
 	)
+
+	-- Republish immediately rather than waiting up to 10s for the next heartbeat.
+	-- ^botspawn and ^botcamp change this set, and a roster that takes ten seconds
+	-- to admit the bot you just spawned reads as the command having failed.
+	publish_spawned(char_id)
 
 	return true
 end
