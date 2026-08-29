@@ -31,8 +31,12 @@
 -- and it is only paid while a player is connected.
 --
 -- Latency is the poll interval: fine for managing a roster, too slow for combat
--- micro. That is the honest trade against MQ, along with item transfers, which
--- need the client's cursor and are not reachable this way at all.
+-- micro. That is the honest trade against MQ.
+--
+-- Item transfers ARE reachable this way, contrary to what this comment used to
+-- say. The cursor is not client state - it is InventoryProfile::m_cursor, which
+-- the zone owns - and ^inventoryremove writes it while ^inventorygive reads it.
+-- See eq-ai-raid-deck/docs/bridge-decision.md.
 
 local bridge = {}
 
@@ -61,6 +65,25 @@ local HB_TTL = "30s"
 local last_heartbeat = {}
 
 local BUCKET_SPAWNED = "airaid:spawned:"
+local BUCKET_CURSOR = "airaid:cursor:"
+
+--- RoF2 invslot::slotCursor. Counted from the enum in common/patches/rof2_limits.h:
+--- slotCharm=0 ... slotAmmo=22, slotGeneral1..10=23..32, slotCursor=33.
+local SLOT_CURSOR = 33
+
+--- Publish what the player is holding: item id, or "0" for an empty hand.
+---
+--- The deck has to refuse an item transfer unless the cursor is empty, and the
+--- reason is nastier than a failed command. The cursor is a FIFO — ItemInstQueue
+--- push() appends to the back while GetItem(slotCursor) reads peek_front() — so
+--- with something already in hand, ^inventoryremove queues the bot's item BEHIND
+--- it and the following ^inventorygive hands over the item you were already
+--- holding. Wrong item, no error, and the bot's item left on your cursor.
+---
+--- Nothing outside the game can see the cursor, so it has to be published here.
+local function publish_cursor(client, char_id)
+	eq.set_data(BUCKET_CURSOR .. char_id, tostring(client:GetItemIDAt(SLOT_CURSOR)), HB_TTL)
+end
 
 --- Publish which of this character's bots are currently in the world.
 ---
@@ -107,6 +130,7 @@ function bridge.on_timer(e)
 		last_heartbeat[char_id] = now
 		eq.set_data(BUCKET_HB .. char_id, tostring(now), HB_TTL)
 		publish_spawned(char_id)
+		publish_cursor(e.self, char_id)
 	end
 
 	local key = BUCKET_CMD .. char_id
@@ -147,9 +171,11 @@ function bridge.on_timer(e)
 	)
 
 	-- Republish immediately rather than waiting up to 10s for the next heartbeat.
-	-- ^botspawn and ^botcamp change this set, and a roster that takes ten seconds
-	-- to admit the bot you just spawned reads as the command having failed.
+	-- ^botspawn and ^botcamp change the spawn set; ^inventoryremove and
+	-- ^inventorygive change the cursor, and a transfer is a two-command sequence
+	-- that cannot take its second step until the deck can see the first landed.
 	publish_spawned(char_id)
+	publish_cursor(e.self, char_id)
 
 	return true
 end
