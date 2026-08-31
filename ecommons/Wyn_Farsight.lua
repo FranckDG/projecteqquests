@@ -27,6 +27,9 @@ local flags = require("airaid_flags")
 local pools = require("airaid_pools")
 local charms = require("airaid_charms")
 
+-- The Explorer's Compass (migration 0019). Handed out on the first hail.
+local COMPASS = 900500
+
 -- Plain ASCII throughout: this renders in a 2013 client.
 local function say(e, text)
 	e.self:Say(text)
@@ -188,6 +191,16 @@ function event_say(e)
 	say(e, "Well met, " .. e.other:GetCleanName()
 		.. ". I map what others only walk through. Tell me where you have been "
 		.. "and I will tell you what it was worth.")
+
+	-- The compass, on the first hail. Guarded by CountItem rather than a flag:
+	-- SummonItem does not check lore, so without this a second hail would hand
+	-- over a duplicate of a LORE item and the client would refuse it awkwardly.
+	-- Counting also means a compass lost to a rollback simply comes back.
+	if e.other:CountItem(COMPASS) == 0 then
+		e.other:SummonItem(COMPASS)
+		tell(e, "Take this compass. It knows the roads you have earned, and it "
+			.. "will learn more as you earn them.")
+	end
 
 	for _, band in ipairs(flags.band_numbers()) do
 		report_band(e, account_id, character_id, band)

@@ -52,3 +52,34 @@ docker compose exec eqemu-server bash -lc 'cd ~/server/lua_modules && lua -e "
 Two things make this failure mode nasty: there are **no zone logs on this install**, so the Lua error is invisible, and the symptom appears far from the cause — a broken module looks like "the command framework is broken".
 
 Note `bit` is missing from standalone `lua` but present in EQEmu's embedded interpreter, so `dragons_of_norrath.lua` fails to load in a bare test. Stub `bit` if you need to test something that pulls it in.
+
+## Exploration quests
+
+A second, independent ladder: explore dungeons, kill their named bosses, earn
+per-class charms by level band. Shares only `event_death_complete` with the era
+ladder. The design record is `eq-ai-raid-server/docs/exploration-quests.md`.
+
+| File | Role |
+|---|---|
+| `lua_modules/airaid_pools.lua` | **GENERATED.** Which dungeons and bosses belong to which band, plus Compass destinations. Regenerate with `node tools/gen-pools.mjs` in the server repo — never hand-edit, and never hand-write an npc id into it. |
+| `lua_modules/airaid_charms.lua` | **GENERATED.** Charm and augment item ids, and the class → archetype lookup. From `node tools/gen-charms.mjs`. |
+| `lua_modules/airaid_flags.lua` | Visit/kill flags, band progress, claim and payment bookkeeping. |
+| `ecommons/Wyn_Farsight.lua` | The Cartographer: reports progress, pays it, hands over charms, titles and the Compass. |
+| `ecommons/Sergeant_Brask.lua` | The Quartermaster: sells earned charms and sigils, unlimited. |
+| `global/items/900500.lua` | The Explorer's Compass. Summons the wayfinder. |
+| `global/a_wayfinder.lua` | Offers unlocked destinations and ports. |
+
+Tests live in the server repo: `./tools/run-lua-tests.sh` loads and drives all of
+it against stubbed bindings.
+
+### Three things that fail silently here
+
+- **A quest clicky needs a click effect it never casts.** No spell means the
+  client never sends `OP_CastSpell`, so the script never runs. The Compass
+  carries an inert spell and returns `1`, which is what suppresses the cast.
+  Returning `nil` casts it instead — no error, just a stray cast bar.
+- **`clicktype 3` is Expendable** and consumes the item. Clickies that should
+  last want `1`.
+- **Compass destinations must not be `zone_points.x/y/z`.** That is the inbound
+  trigger; landing there zones you straight into the dungeon. Use
+  `target_x/y/z` of the route *out*.

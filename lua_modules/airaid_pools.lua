@@ -68,6 +68,18 @@ M.raids = {
 	},
 }
 
+-- Compass destinations. zone_id is resolved here so the Wayfinder never
+-- has to look one up. Coordinates are the game's own exit points from that
+-- band's dungeon - solid ground, and NOT the inbound zone line, which would
+-- re-trigger and send the player straight back into the dungeon.
+M.destinations = {
+	[10] = { zone = "qeytoqrg", zone_id = 4, x = -1155, y = 3431, z = 4, h = 260, label = "Qeynos Hills - Blackburrow" },
+	[20] = { zone = "innothule", zone_id = 46, x = -812, y = 172, z = -7, h = 65, label = "Innothule Swamp - Guk" },
+	[30] = { zone = "lavastorm", zone_id = 27, x = 983, y = 1330, z = -78, h = 94, label = "Lavastorm - Solusek's Eye" },
+	[40] = { zone = "everfrost", zone_id = 30, x = -7073, y = 2022, z = -55, h = 136, label = "Everfrost Peaks - Permafrost" },
+	hub = { zone = "ecommons", zone_id = 22, x = -235, y = -1497, z = 3.13, h = 254, label = "East Commonlands - the Cartographer" },
+}
+
 -- npc_type id -> { zone = <short name>, is_raid = <bool> }
 M.boss_index = {
 	[11017] = { zone = "runnyeye", is_raid = false },
