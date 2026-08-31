@@ -40,6 +40,22 @@ local function join(list)
 	return table.concat(list, ", ")
 end
 
+-- Title sets are ARITHMETIC, not a lookup table: 900 + band for level bands,
+-- 950 + era for era-pure raid titles. Migration 0018 inserts rows using the same
+-- formula, so there is no mapping on either side to fall out of step. A band
+-- with no title row grants a set nothing uses - a cosmetic no-op, not an error.
+--
+-- eq.enable_title acts on the quest INITIATOR, which in event_say is the player
+-- who spoke, and grants are per character (player_titlesets.char_id). So an alt
+-- inheriting the account's exploring earns its own title when it hails.
+local function grant_band_title(band)
+	eq.enable_title(900 + band)
+end
+
+local function grant_era_title(era)
+	eq.enable_title(950 + era)
+end
+
 -- ---------------------------------------------------------------------------
 -- Paying.
 -- ---------------------------------------------------------------------------
@@ -68,6 +84,7 @@ local function pay_band(e, account_id, character_id, progress)
 
 	e.other:AddLevelBasedExp(100, progress.reward_level)
 	e.other:AddMoneyToPP(0, 0, 0, progress.reward_level * 20)
+	grant_band_title(progress.band)
 
 	-- The charm matches the character's own archetype. Which charm that is comes
 	-- from the same class bitmask the item carries, so he can never hand over one
@@ -137,7 +154,14 @@ local function report_raid(e, account_id, key)
 	end
 
 	if progress.complete then
-		tell(e, "The great powers of this age have fallen to you.")
+		if progress.era_pure then
+			grant_era_title(progress.era)
+			tell(e, "The great powers of this age have fallen to you, and you were "
+				.. "there when it mattered. That is worth a name.")
+		else
+			tell(e, "The great powers of this age have fallen to you - though the "
+				.. "world had already moved on by the time you got there.")
+		end
 	elseif progress.killed then
 		tell(e, "You have struck down a great power, but have yet to walk: "
 			.. join(progress.missing))

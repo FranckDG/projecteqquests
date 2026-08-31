@@ -237,11 +237,24 @@ function M.raid_progress(account_id, key)
 
 		if M.has_kill(account_id, zone) then
 			progress.killed = true
+
+			-- The EARLIEST kill across the band's zones is the purest one, since
+			-- eras only move forward. Taking the minimum means a later re-kill in
+			-- a further era can never cost a title already earned.
+			local era = M.kill_era(account_id, zone)
+
+			if era ~= nil and (progress.killed_era == nil or era < progress.killed_era) then
+				progress.killed_era = era
+			end
 		end
 	end
 
 	progress.total = #spec.visits
 	progress.complete = (progress.visited >= progress.total) and progress.killed
+
+	-- Era-pure: the boss fell while this era was the current one, not on a
+	-- sightseeing trip after the server had moved on.
+	progress.era_pure = progress.complete and progress.killed_era == spec.era
 
 	return progress
 end
