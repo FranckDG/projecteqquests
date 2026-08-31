@@ -213,7 +213,7 @@ M.destinations = {
 	[60] = { zone = "eastwastes", zone_id = 116, x = 7020, y = -6248, z = -299, h = 381, label = "Eastern Wastes - Kael Drakkel" },
 	[65] = { zone = "potranquility", zone_id = 203, x = -192, y = -8, z = -628, h = 294, label = "Plane of Tranquility - Halls of Honor" },
 	[70] = { zone = "wallofslaughter", zone_id = 300, x = -1696, y = 1980, z = 109, h = 128, label = "Wall of Slaughter - the Proving Grounds" },
-	hub = { zone = "ecommons", zone_id = 22, x = -235, y = -1497, z = 3.13, h = 254, label = "East Commonlands - the Cartographer" },
+	hub = { zone = "ecommons", zone_id = 22, x = -291, y = -1546, z = 3.75, h = 254, label = "East Commonlands - the Cartographer" },
 }
 
 -- npc_type id -> { zone = <short name>, is_raid = <bool> }
