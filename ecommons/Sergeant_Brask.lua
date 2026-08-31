@@ -1,36 +1,39 @@
--- Sergeant Brask, the Quartermaster. Sells any charm you have earned the band
--- for, and any raid augment you have earned the era for, in unlimited copies.
+-- Sergeant Brask, the Quartermaster. Issues any charm you have earned the band
+-- for, and any raid sigil you have earned the era for, in unlimited copies,
+-- FREE.
+--
+-- WHY FREE. He used to charge band * 10 pp. Two things make that wrong here.
+--
+-- Measured against the live items table, the charms were priced at two to four
+-- times what comparable gear is actually worth - a band-20 charm is 25hp/5ac,
+-- and 32 comparable items at that level average 51pp against the 200pp he asked.
+--
+-- The deeper problem is that platinum is not a resource on this server. There is
+-- no player economy, no bazaar, and EQEmu has no coin multiplier rule to tune -
+-- income is vendoring drops, which is tedium rather than content. So any price
+-- was a grind tax on rewards the player had ALREADY earned, payable in the one
+-- currency the server cannot generate interestingly.
+--
+-- The gate is the band flag. That is real content and it is enough.
+--
+-- He is also a quartermaster rather than a merchant, and a quartermaster issues
+-- kit to soldiers entitled to it. Charging was always slightly out of character.
 --
 -- Unlimited is the point: you are equipping an army, not a character. That is
 -- also why the charms are not lore - a lore charm could only be held one at a
 -- time, which would make kitting six bots an afternoon of walking back and forth.
 --
--- HE SELLS ACROSS ARCHETYPES. A warrior may buy the Vessel charm for their
+-- HE ISSUES ACROSS ARCHETYPES. A warrior may draw the Vessel charm for their
 -- cleric bot. The item's own class bitmask still decides who can wear it, so
--- there is nothing to police here: buying the wrong one wastes plat, not
--- progress. Gating the shop by the buyer's class would only stop people
--- equipping the bots this exists to equip.
+-- there is nothing to police here: drawing the wrong one costs nothing at all.
+-- Gating the stores by the drawer's class would only stop people equipping the
+-- bots this exists to equip.
 --
 -- What he checks is the BAND FLAG, which is account-wide. Earning band 20 on any
 -- character opens band 20's whole shelf to every character on the account.
 local flags = require("airaid_flags")
 local pools = require("airaid_pools")
 local charms = require("airaid_charms")
-
-local COPPER_PER_PLATINUM = 1000
-
--- The design prices charms at band * 10 pp and raid augments at the era's level
--- cap * 20. Keyed to the band NUMBER rather than the reward level, matching the
--- stat curve, so price and power move together.
-local function charm_price(band)
-	return band * 10
-end
-
-local function aug_price()
-	local cap = tonumber(eq.get_rule("Character:MaxLevel")) or 50
-
-	return cap * 20
-end
 
 local function tell(e, text)
 	e.other:Message(MT.Yellow, text)
@@ -43,14 +46,9 @@ local function offer(said, shown)
 	return eq.say_link(said, true, shown)
 end
 
-local function sell(e, item_id, price_pp, label)
-	if not e.other:TakeMoneyFromPP(price_pp * COPPER_PER_PLATINUM, true) then
-		tell(e, "That is " .. price_pp .. "pp, and you do not have it on you.")
-		return
-	end
-
+local function issue(e, item_id, label)
 	e.other:SummonItem(item_id)
-	tell(e, label .. " - " .. price_pp .. "pp. Buy as many as you have need of.")
+	tell(e, label .. " - issued. Come back for as many as you have need of.")
 end
 
 -- ---------------------------------------------------------------------------
@@ -60,7 +58,7 @@ local function show_shelf(e, account_id)
 
 	for _, band in ipairs(flags.band_numbers()) do
 		if flags.band_claimed(account_id, band) then
-			local line = "Band " .. band .. " (" .. charm_price(band) .. "pp): "
+			local line = "Band " .. band .. ": "
 			local parts = {}
 
 			for _, key in ipairs(charms.archetype_order) do
@@ -92,8 +90,7 @@ local function show_shelf(e, account_id)
 			end
 
 			if #parts > 0 then
-				tell(e, "Sigils of this age (" .. aug_price() .. "pp): "
-					.. table.concat(parts, "  "))
+				tell(e, "Sigils of this age: " .. table.concat(parts, "  "))
 				shown = shown + 1
 			end
 		end
@@ -115,9 +112,9 @@ function event_say(e)
 	local message = e.message:lower()
 
 	if message:findi("hail") then
-		e.self:Say("Quartermaster Brask. Wyn marks the maps, I keep what they are "
-			.. "worth. Everything here is bought as often as you like - your "
-			.. "companions need arming too.")
+		e.self:Say("Quartermaster Brask. Wyn marks the maps, I keep the stores. "
+			.. "Anything you have earned, you may draw as often as you like - "
+			.. "your companions need arming too, and they do not carry coin.")
 		show_shelf(e, account_id)
 		return
 	end
@@ -148,7 +145,7 @@ function event_say(e)
 			return
 		end
 
-		sell(e, item_id, aug_price(), "Sigil of the " .. charms.archetype_name[archetype])
+		issue(e, item_id, "Sigil of the " .. charms.archetype_name[archetype])
 		return
 	end
 
@@ -170,7 +167,6 @@ function event_say(e)
 			return
 		end
 
-		sell(e, item_id, charm_price(band),
-			charms.archetype_name[key] .. " charm of band " .. band)
+		issue(e, item_id, charms.archetype_name[key] .. " charm of band " .. band)
 	end
 end
