@@ -145,4 +145,162 @@ function M.record_kill(npc_type_id)
 	return credited > 0
 end
 
+-- ---------------------------------------------------------------------------
+-- Reading progress, for the Cartographer.
+--
+-- Two scopes, and the difference matters. A dungeon being DONE and a band being
+-- CLAIMED are account-wide, so alts share the exploring. Being PAID is
+-- per-character, so each character earns its own XP and plat for the same
+-- dungeon - which is the point of sharing the flags in the first place.
+-- ---------------------------------------------------------------------------
+
+function M.has_visit(account_id, zone)
+	return eq.get_data(visit_key(account_id, zone)) ~= ""
+end
+
+function M.has_kill(account_id, zone)
+	return eq.get_data(kill_key(account_id, zone)) ~= ""
+end
+
+-- A dungeon counts only when it has been both entered and cleared.
+function M.dungeon_done(account_id, zone)
+	return M.has_visit(account_id, zone) and M.has_kill(account_id, zone)
+end
+
+function M.kill_era(account_id, zone)
+	local value = eq.get_data(killera_key(account_id, zone))
+
+	if value == "" then
+		return nil
+	end
+
+	return tonumber(value)
+end
+
+-- How far along a band is, counting only dungeons whose era has actually opened.
+--
+-- Dungeons from a locked era are not merely hidden from the dialogue, they are
+-- left out of the count, because showing "2 of 3" against a pool the player
+-- cannot reach yet reads as a bug rather than as a locked door.
+function M.band_progress(account_id, band)
+	local spec = pools.bands[band]
+
+	if spec == nil then
+		return nil
+	end
+
+	local era = current_era()
+	local progress = {
+		band = band,
+		required = spec.required,
+		reward_level = spec.reward_level,
+		done = 0,
+		available = 0,
+		done_zones = {},
+		missing = {},
+	}
+
+	for _, dungeon in ipairs(spec.dungeons) do
+		if dungeon.era <= era then
+			progress.available = progress.available + 1
+
+			if M.dungeon_done(account_id, dungeon.zone) then
+				progress.done = progress.done + 1
+				table.insert(progress.done_zones, dungeon.zone)
+			else
+				table.insert(progress.missing, dungeon.zone)
+			end
+		end
+	end
+
+	progress.complete = progress.done >= spec.required
+
+	return progress
+end
+
+-- Raid bands want every listed zone visited and any one of the bosses dead.
+function M.raid_progress(account_id, key)
+	local spec = pools.raids[key]
+
+	if spec == nil then
+		return nil
+	end
+
+	local progress = { key = key, era = spec.era, visited = 0, missing = {}, killed = false }
+
+	for _, zone in ipairs(spec.visits) do
+		if M.has_visit(account_id, zone) then
+			progress.visited = progress.visited + 1
+		else
+			table.insert(progress.missing, zone)
+		end
+
+		if M.has_kill(account_id, zone) then
+			progress.killed = true
+		end
+	end
+
+	progress.total = #spec.visits
+	progress.complete = (progress.visited >= progress.total) and progress.killed
+
+	return progress
+end
+
+-- ---------------------------------------------------------------------------
+-- Claim and payment bookkeeping.
+-- ---------------------------------------------------------------------------
+
+local function band_key(account_id, band)
+	return "airaid:" .. account_id .. ":band:" .. band
+end
+
+local function paid_dungeon_key(account_id, character_id, zone)
+	return "airaid:" .. account_id .. ":char:" .. character_id .. ":paid:" .. zone
+end
+
+local function paid_band_key(account_id, character_id, band)
+	return "airaid:" .. account_id .. ":char:" .. character_id .. ":paid:band:" .. band
+end
+
+function M.band_claimed(account_id, band)
+	return eq.get_data(band_key(account_id, band)) ~= ""
+end
+
+function M.claim_band(account_id, band)
+	eq.set_data(band_key(account_id, band), "1")
+end
+
+function M.dungeon_paid(account_id, character_id, zone)
+	return eq.get_data(paid_dungeon_key(account_id, character_id, zone)) ~= ""
+end
+
+function M.mark_dungeon_paid(account_id, character_id, zone)
+	eq.set_data(paid_dungeon_key(account_id, character_id, zone), "1")
+end
+
+function M.band_paid(account_id, character_id, band)
+	return eq.get_data(paid_band_key(account_id, character_id, band)) ~= ""
+end
+
+function M.mark_band_paid(account_id, character_id, band)
+	eq.set_data(paid_band_key(account_id, character_id, band), "1")
+end
+
+-- Bands in ascending order. pairs() over a table with numeric keys gives no
+-- order at all, and a Cartographer that lists bands differently every hail looks
+-- broken even though it is only unordered.
+function M.band_numbers()
+	local numbers = {}
+
+	for band, _ in pairs(pools.bands) do
+		table.insert(numbers, band)
+	end
+
+	table.sort(numbers)
+
+	return numbers
+end
+
+M.current_era = current_era
+
 return M
