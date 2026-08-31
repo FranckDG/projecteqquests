@@ -12,6 +12,7 @@ commands["hotzones"]  = {  0, require(commands_path .. "hotzone") };
 commands["akill"]     = { 80, require(commands_path .. "airaid_kill") };
 commands["aspawn"]    = { 100, require(commands_path .. "airaid_spawn") };
 commands["abridge"]   = {  0, require(commands_path .. "airaid_bridge") };
+commands["aexplore"]  = { 100, require(commands_path .. "airaid_explore") };
 
 function eq.DispatchCommands(e)
 	local command = commands[e.command];

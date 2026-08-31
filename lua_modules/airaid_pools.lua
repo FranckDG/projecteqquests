@@ -58,6 +58,20 @@ M.bands = {
 			{ zone = "kedge", era = 0, bosses = { 64013 } },
 		},
 	},
+	[50] = {
+		range = { 50, 60 },
+		reward_level = 60,
+		boss_cap = 65,
+		required = 4,
+		dungeons = {
+			{ zone = "hole", era = 0, bosses = { 39138 } },
+			{ zone = "karnor", era = 1, bosses = { 102103 } },
+			{ zone = "citymist", era = 1, bosses = { 90174 } },
+			{ zone = "charasis", era = 1, bosses = { 105153 } },
+			{ zone = "sebilis", era = 1, bosses = { 89153 } },
+			{ zone = "chardok", era = 1, bosses = { 103056 } },
+		},
+	},
 }
 
 M.raids = {
@@ -77,6 +91,7 @@ M.destinations = {
 	[20] = { zone = "innothule", zone_id = 46, x = -812, y = 172, z = -7, h = 65, label = "Innothule Swamp - Guk" },
 	[30] = { zone = "lavastorm", zone_id = 27, x = 983, y = 1330, z = -78, h = 94, label = "Lavastorm - Solusek's Eye" },
 	[40] = { zone = "everfrost", zone_id = 30, x = -7073, y = 2022, z = -55, h = 136, label = "Everfrost Peaks - Permafrost" },
+	[50] = { zone = "dreadlands", zone_id = 86, x = -1948, y = 702, z = 30, h = 124, label = "Dreadlands - Karnor's Castle" },
 	hub = { zone = "ecommons", zone_id = 22, x = -235, y = -1497, z = 3.13, h = 254, label = "East Commonlands - the Cartographer" },
 }
 
@@ -89,6 +104,7 @@ M.boss_index = {
 	[31126] = { zone = "soldunga", is_raid = false },
 	[32062] = { zone = "soldungb", is_raid = false },
 	[36103] = { zone = "befallen", is_raid = false },
+	[39138] = { zone = "hole", is_raid = false },
 	[44100] = { zone = "najena", is_raid = false },
 	[45094] = { zone = "qcat", is_raid = false },
 	[48238] = { zone = "cazicthule", is_raid = true },
@@ -103,6 +119,11 @@ M.boss_index = {
 	[72003] = { zone = "fearplane", is_raid = true },
 	[73039] = { zone = "permafrost", is_raid = false },
 	[76007] = { zone = "hateplane", is_raid = true },
+	[89153] = { zone = "sebilis", is_raid = false },
+	[90174] = { zone = "citymist", is_raid = false },
+	[102103] = { zone = "karnor", is_raid = false },
+	[103056] = { zone = "chardok", is_raid = false },
+	[105153] = { zone = "charasis", is_raid = false },
 }
 
 -- zone short name -> true, for the visit hook
@@ -111,11 +132,16 @@ M.visit_index = {
 	["befallen"] = true,
 	["blackburrow"] = true,
 	["cazicthule"] = true,
+	["charasis"] = true,
+	["chardok"] = true,
+	["citymist"] = true,
 	["crushbone"] = true,
 	["fearplane"] = true,
 	["gukbottom"] = true,
 	["guktop"] = true,
 	["hateplane"] = true,
+	["hole"] = true,
+	["karnor"] = true,
 	["kedge"] = true,
 	["mistmoore"] = true,
 	["najena"] = true,
@@ -123,6 +149,7 @@ M.visit_index = {
 	["permafrost"] = true,
 	["qcat"] = true,
 	["runnyeye"] = true,
+	["sebilis"] = true,
 	["soldunga"] = true,
 	["soldungb"] = true,
 	["unrest"] = true,

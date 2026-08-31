@@ -139,7 +139,17 @@ local function report_band(e, account_id, character_id, band)
 		flags.claim_band(account_id, progress.band)
 		pay_band(e, account_id, character_id, progress)
 	else
-		tell(e, line .. ". Still to clear: " .. join(progress.missing))
+		local text = line .. ". Still to clear: " .. join(progress.missing)
+
+		-- A band whose era has not opened yet cannot be finished however much of
+		-- it you clear - band 50 during Classic shows a pool of one against a
+		-- requirement of four. Say so, or the count reads as a bug rather than a
+		-- locked door.
+		if progress.available < progress.required then
+			text = text .. " - and the rest of this band lies in an age not yet opened."
+		end
+
+		tell(e, text)
 	end
 
 	-- A band already claimed on the account still owes THIS character its band
