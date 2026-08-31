@@ -62,14 +62,39 @@ local function show(e, account_id)
 		end
 	end
 
+	-- Raid bands, oldest era first. pairs() has no order, so without this the
+	-- list reshuffles on every invocation and reads like noise.
+	local raid_keys = {}
+
 	for key, _ in pairs(pools.raids) do
+		table.insert(raid_keys, key)
+	end
+
+	table.sort(raid_keys, function(a, b)
+		return pools.raids[a].era < pools.raids[b].era
+	end)
+
+	local era = flags.current_era()
+	local sealed = 0
+
+	for _, key in ipairs(raid_keys) do
 		local p = flags.raid_progress(account_id, key)
 
-		if p ~= nil then
+		-- A raid band whose expansion has not opened cannot be started, let
+		-- alone finished. Counting them rather than listing them keeps this
+		-- readable: at Classic there are ten, and nine of them are noise.
+		if p ~= nil and p.era > era then
+			sealed = sealed + 1
+		elseif p ~= nil then
 			e.self:Message(MT.Yellow, "  " .. key .. "  visited " .. p.visited .. "/" .. p.total
 				.. ", bosses " .. p.kills .. "/" .. p.required_kills
 				.. ", era-pure " .. tostring(p.era_pure))
 		end
+	end
+
+	if sealed > 0 then
+		e.self:Message(MT.Yellow, "  " .. sealed
+			.. " further raid band(s) await an age that has not opened.")
 	end
 end
 
