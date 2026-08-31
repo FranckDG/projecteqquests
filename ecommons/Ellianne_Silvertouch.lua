@@ -161,18 +161,35 @@ function event_trade(e)
 	-- fee - and the engine returns the remainder, which is also where change
 	-- comes from. Working the change out by hand was both redundant and a second
 	-- thing to get wrong.
-	local claim = {}
+	-- CLAIM EXACTLY WHAT IS ON THE TABLE - every bar and every coin.
+	--
+	-- NPC::CheckHandin compares money with == , not >= :
+	--
+	--     money_met = h.money.platinum == r.money.platinum && ...
+	--
+	-- so there is no such thing as claiming the fee and leaving change. Claiming
+	-- 20pp of a 25pp payment fails the entire handin, and a failed handin has
+	-- already consumed the items by the time the script hears about it.
+	--
+	-- So she claims the lot and hands the difference back herself. Overpaying is
+	-- still fine for the player; the exactness is between the script and the
+	-- engine, not between her and the customer.
+	local claim = {
+		platinum = e.trade.platinum or 0,
+		gold     = e.trade.gold or 0,
+		silver   = e.trade.silver or 0,
+		copper   = e.trade.copper or 0,
+	}
 
 	for _, job in ipairs(work) do
 		claim[job.item_id] = (claim[job.item_id] or 0) + job.count
 	end
 
-	claim.platinum = math.floor(owed / COPPER_PER_PLATINUM)
-
 	if not eq.handin(claim) then
-		-- The claim did not match what is actually on the table. Nothing has
-		-- been taken; the engine returns the lot.
-		e.self:Say("Something slipped. Nothing has been touched - try again.")
+		-- Should be unreachable: the claim is built from what was handed over.
+		-- Return the lot explicitly rather than trusting the engine's catch-all,
+		-- which eq.handin has already stepped past.
+		refuse(e, "Something slipped through my fingers. Take it back and try again.")
 		return
 	end
 
@@ -181,6 +198,18 @@ function event_trade(e)
 	for _, job in ipairs(work) do
 		e.other:SummonItem(job.metal.product, job.count)
 		made = made + job.count
+	end
+
+	-- Change, now that she has taken everything.
+	local change = paid - owed
+
+	if change > 0 then
+		e.other:AddMoneyToPP(
+			change % 10,
+			math.floor(change / 10) % 10,
+			math.floor(change / 100) % 10,
+			math.floor(change / COPPER_PER_PLATINUM)
+		)
 	end
 
 	e.self:Say("There. " .. made .. " woken and singing.")
