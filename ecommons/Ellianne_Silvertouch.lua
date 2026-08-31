@@ -131,7 +131,7 @@ function event_trade(e)
 				count = 1
 			end
 
-			table.insert(work, { metal = metal, count = count })
+			table.insert(work, { metal = metal, item_id = inst:GetID(), count = count })
 			owed = owed + (metal.fee * COPPER_PER_PLATINUM * count)
 		end
 	end
@@ -148,25 +148,39 @@ function event_trade(e)
 		return
 	end
 
-	-- Past here the trade is accepted. The raw bars are consumed simply by not
-	-- being returned: EVENT_TRADE has already taken them out of the player's
-	-- inventory, and anything still held when this handler ends is gone.
+	-- CLAIM WHAT SHE KEEPS. THE ENGINE RETURNS THE REST.
+	--
+	-- This is the opposite of what it looks like. Items handed to an NPC are NOT
+	-- consumed by the handler ignoring them - Items:AlwaysReturnHandins is true,
+	-- and trading.cpp calls ReturnHandinItems() for anything EVENT_TRADE did not
+	-- claim. So summoning the product without claiming the components hands back
+	-- the raw bars as well: twenty silver in, twenty enchanted AND twenty silver
+	-- out.
+	--
+	-- eq.handin() is the claim. List exactly what she keeps - the bars and her
+	-- fee - and the engine returns the remainder, which is also where change
+	-- comes from. Working the change out by hand was both redundant and a second
+	-- thing to get wrong.
+	local claim = {}
+
+	for _, job in ipairs(work) do
+		claim[job.item_id] = (claim[job.item_id] or 0) + job.count
+	end
+
+	claim.platinum = math.floor(owed / COPPER_PER_PLATINUM)
+
+	if not eq.handin(claim) then
+		-- The claim did not match what is actually on the table. Nothing has
+		-- been taken; the engine returns the lot.
+		e.self:Say("Something slipped. Nothing has been touched - try again.")
+		return
+	end
+
 	local made = 0
 
 	for _, job in ipairs(work) do
 		e.other:SummonItem(job.metal.product, job.count)
 		made = made + job.count
-	end
-
-	local change = paid - owed
-
-	if change > 0 then
-		e.other:AddMoneyToPP(
-			change % 10,
-			math.floor(change / 10) % 10,
-			math.floor(change / 100) % 10,
-			math.floor(change / COPPER_PER_PLATINUM)
-		)
 	end
 
 	e.self:Say("There. " .. made .. " woken and singing.")
