@@ -15,40 +15,46 @@
 -- it otherwise. So the spell is there to make the item clickable and this return
 -- is there to stop it going off.
 --
+-- e.self IS THE ITEM, NOT THE PLAYER. For item events lua_parser.cpp pushes the
+-- Lua_ItemInst as `self` and the Client as `owner` - the opposite way round from
+-- NPC and player scripts, where self is the NPC or the client. Using e.self here
+-- fails with "attempt to call method IsEngaged (a nil value)" the moment anyone
+-- clicks it.
+--
 -- event_item_click_cast, not event_item_click: the former is what OP_CastSpell
 -- raises and the only one whose return value suppresses the cast.
 local WAYFINDER = 2000202
 local LIFETIME_MS = 60 * 1000
 
 function event_item_click_cast(e)
-	if not e.self.valid then
+	if not e.owner.valid then
 		return 1
 	end
 
 	-- Porting out of a fight is not what this is for, and the design says so.
-	if e.self:IsEngaged() then
-		e.self:Message(MT.Red, "Not while something is trying to kill you.")
+	if e.owner:IsEngaged() then
+		e.owner:Message(MT.Red, "Not while something is trying to kill you.")
 		return 1
 	end
 
 	local wayfinder = eq.spawn2(
 		WAYFINDER, 0, 0,
-		e.self:GetX(), e.self:GetY(), e.self:GetZ(), e.self:GetHeading()
+		e.owner:GetX(), e.owner:GetY(), e.owner:GetZ(), e.owner:GetHeading()
 	)
 
 	if wayfinder == nil or not wayfinder.valid then
-		e.self:Message(MT.Red, "The needle spins and settles. Nothing comes.")
+		e.owner:Message(MT.Red, "The needle spins and settles. Nothing comes.")
 		return 1
 	end
 
 	-- Bind the wayfinder to whoever summoned it, so a passer-by cannot ride
 	-- someone else's compass. The account id is what the destination list is
 	-- keyed on, and the character id is only for the "not yours" message.
-	wayfinder:SetEntityVariable("airaid_account", tostring(e.self:AccountID()))
-	wayfinder:SetEntityVariable("airaid_summoner", e.self:GetCleanName())
+	wayfinder:SetEntityVariable("airaid_account", tostring(e.owner:AccountID()))
+	wayfinder:SetEntityVariable("airaid_summoner", e.owner:GetCleanName())
 	wayfinder:SetEntityVariable("airaid_lifetime", tostring(LIFETIME_MS))
 
-	e.self:Message(MT.Yellow, "You unfold the compass. A wayfinder steps out of "
+	e.owner:Message(MT.Yellow, "You unfold the compass. A wayfinder steps out of "
 		.. "the air beside you.")
 
 	return 1
