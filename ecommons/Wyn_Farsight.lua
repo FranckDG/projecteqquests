@@ -176,11 +176,8 @@ local function report_raid(e, account_id, key)
 				.. "world had already moved on by the time you got there.")
 		end
 	elseif progress.killed then
-		tell(e, "You have struck down a great power, but have yet to walk: "
-			.. join(progress.missing))
-	elseif progress.visited > 0 then
-		tell(e, "You have walked " .. progress.visited .. " of " .. progress.total
-			.. " great places. Still to walk: " .. join(progress.missing))
+		tell(e, "You have struck down " .. progress.kills .. " of the "
+			.. progress.required_kills .. " great powers of this age.")
 	end
 end
 

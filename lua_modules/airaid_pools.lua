@@ -142,7 +142,7 @@ M.raids = {
 		era = 0,
 		required_kills = 2,
 		visits = { "hateplane", "fearplane", "airplane", "cazicthule" },
-		bosses = { 76007, 72003, 48238 },
+		bosses = { 76007, 72003, 48238, 71012, 71034 },
 	},
 	raid1 = {
 		era = 1,
@@ -237,6 +237,8 @@ M.boss_index = {
 	[66005] = { zone = "gukbottom", is_raid = false },
 	[66146] = { zone = "gukbottom", is_raid = false },
 	[66159] = { zone = "gukbottom", is_raid = false },
+	[71012] = { zone = "airplane", is_raid = true },
+	[71034] = { zone = "airplane", is_raid = true },
 	[72003] = { zone = "fearplane", is_raid = true },
 	[73039] = { zone = "permafrost", is_raid = false },
 	[76007] = { zone = "hateplane", is_raid = true },

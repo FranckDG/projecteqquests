@@ -86,9 +86,8 @@ local function show(e, account_id)
 		if p ~= nil and p.era > era then
 			sealed = sealed + 1
 		elseif p ~= nil then
-			e.self:Message(MT.Yellow, "  " .. key .. "  visited " .. p.visited .. "/" .. p.total
-				.. ", bosses " .. p.kills .. "/" .. p.required_kills
-				.. ", era-pure " .. tostring(p.era_pure))
+			e.self:Message(MT.Yellow, "  " .. key .. "  bosses " .. p.kills .. "/"
+				.. p.required_kills .. ", era-pure " .. tostring(p.era_pure))
 		end
 	end
 

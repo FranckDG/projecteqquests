@@ -201,9 +201,18 @@ function M.raid_kill_era(account_id, npc_type_id)
 	return tonumber(value)
 end
 
--- A dungeon counts only when it has been both entered and cleared.
+-- A dungeon counts when its boss is dead. Nothing else.
+--
+-- It used to also require a visit flag, on the theory that you should have to
+-- walk the place rather than be summoned to the door. In practice the boss is
+-- already in the dungeon, so killing it proves you were there, and the second
+-- requirement only created a way to have done the work and not be credited.
+--
+-- Visits are still RECORDED - they cost one bucket write the first time you
+-- enter a zone, and they are a record of where an account has been - but
+-- nothing requires them any more.
 function M.dungeon_done(account_id, zone)
-	return M.has_visit(account_id, zone) and M.has_kill(account_id, zone)
+	return M.has_kill(account_id, zone)
 end
 
 function M.kill_era(account_id, zone)
@@ -301,13 +310,15 @@ function M.raid_progress(account_id, key)
 
 	progress.total = #spec.visits
 
+	-- Kills only. Walking the zones is no longer required here either - the
+	-- bosses live in them, so killing two proves the trip.
+	--
 	-- More than one boss, deliberately. A raid band should not fall to a single
 	-- lucky pull by the same six that clear the level bands, and requiring two
 	-- distinct raid targets is the honest way to say "bring more than a group" -
 	-- HP will not say it, because this server's own Classic raid gates (Nagafen,
 	-- Vox, Trakanon) sit at 32,000 while a later era's trash carries more.
-	progress.complete = (progress.visited >= progress.total)
-		and (progress.kills >= progress.required_kills)
+	progress.complete = progress.kills >= progress.required_kills
 
 	-- Era-pure: the boss fell while this era was the current one, not on a
 	-- sightseeing trip after the server had moved on.
