@@ -21,11 +21,16 @@ local airaid_era = require("airaid_era")
 -- SPIKE: server-side command bridge. See lua_modules/airaid_bridge.lua and
 -- lua_modules/commands/airaid_bridge.lua. Remove both with this line.
 local airaid_bridge = require("airaid_bridge")
+-- Exploration quests: mark this dungeon visited. Cheap - one hash probe against
+-- a generated index, and a bucket read only when the zone is actually a pool
+-- zone. See lua_modules/airaid_flags.lua.
+local airaid_flags = require("airaid_flags")
 
 function event_enter_zone(e)
 	airaid_era.refresh()
 	airaid_era.apply_bot_limit(e.self)
 	airaid_bridge.start(e.self)
+	airaid_flags.record_visit(e.self)
 	mysterious_voice(e)
 
 	if eq.is_lost_dungeons_of_norrath_enabled() and eq.get_zone_short_name() == "lavastorm" and e.self:GetGMStatus() >= 80 then 

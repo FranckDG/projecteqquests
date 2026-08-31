@@ -52,9 +52,16 @@ end
 -- creating some and editing others, each a future merge conflict.
 -- ---------------------------------------------------------------------------
 local airaid_era = require("airaid_era")
+-- Exploration quests: this dungeon's named boss died. Separate ladder from the
+-- era one above, sharing only this hook - a level-band boss is never an era gate
+-- boss (gen-pools.mjs refuses to emit one), but a RAID band boss may be, so one
+-- kill can legitimately feed both.
+local airaid_flags = require("airaid_flags")
 
 function event_death_complete(e)
 	airaid_era.refresh()
+
+	airaid_flags.record_kill(e.self:GetNPCTypeID())
 
 	-- e.other is NOT the killer here - it arrives as the dying NPC itself, and
 	-- under #kill it genuinely is: Mob::Kill() calls Death(this, ...), passing
