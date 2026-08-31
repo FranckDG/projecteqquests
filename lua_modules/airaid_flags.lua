@@ -48,6 +48,25 @@ local function kill_key(account_id, zone)
 	return "airaid:" .. account_id .. ":kill:" .. zone
 end
 
+-- Raid kills are flagged PER BOSS, not per zone, and that is load-bearing twice:
+--
+--   - Zones are shared between the two ladders. raid3 lists Ssra Temple and Vex
+--     Thal, which band 60 also uses. Per-zone flags would let the High Priest
+--     stand in for the Emperor, and nothing would ever say so.
+--   - A raid band requires two DISTINCT bosses, and several bands keep all of
+--     theirs in one zone - Veeshan's Peak has three dragons, Anguish has three
+--     targets. Counted per zone, those bands could never reach two.
+--
+-- A boss belonging to both ladders sets both flags, which is the double-dipping
+-- §2.8 intends: era-unlock bosses may be raid-band bosses.
+local function raid_kill_key(account_id, npc_type_id)
+	return "airaid:" .. account_id .. ":raidkill:" .. npc_type_id
+end
+
+local function raid_era_key(account_id, npc_type_id)
+	return "airaid:" .. account_id .. ":raidera:" .. npc_type_id
+end
+
 local function killera_key(account_id, zone)
 	return "airaid:" .. account_id .. ":killera:" .. zone
 end
@@ -129,11 +148,17 @@ function M.record_kill(npc_type_id)
 				credited = credited + 1
 			end
 
-			-- Raid bands pay an era-pure title when the kill happened while the
-			-- era was current, so the era has to be recorded at kill time - it
-			-- cannot be recovered later.
 			if boss.is_raid then
-				local era_key = killera_key(account_id, boss.zone)
+				local raid_key = raid_kill_key(account_id, npc_type_id)
+
+				if eq.get_data(raid_key) == "" then
+					eq.set_data(raid_key, "1")
+				end
+
+				-- Raid bands pay an era-pure title when the kill happened while
+				-- the era was current, so the era has to be recorded at kill
+				-- time - it cannot be recovered later.
+				local era_key = raid_era_key(account_id, npc_type_id)
 
 				if eq.get_data(era_key) == "" then
 					eq.set_data(era_key, tostring(era))
@@ -160,6 +185,20 @@ end
 
 function M.has_kill(account_id, zone)
 	return eq.get_data(kill_key(account_id, zone)) ~= ""
+end
+
+function M.has_raid_kill(account_id, npc_type_id)
+	return eq.get_data(raid_kill_key(account_id, npc_type_id)) ~= ""
+end
+
+function M.raid_kill_era(account_id, npc_type_id)
+	local value = eq.get_data(raid_era_key(account_id, npc_type_id))
+
+	if value == "" then
+		return nil
+	end
+
+	return tonumber(value)
 end
 
 -- A dungeon counts only when it has been both entered and cleared.
@@ -226,7 +265,15 @@ function M.raid_progress(account_id, key)
 		return nil
 	end
 
-	local progress = { key = key, era = spec.era, visited = 0, missing = {}, killed = false }
+	local progress = {
+		key = key,
+		era = spec.era,
+		visited = 0,
+		missing = {},
+		killed = false,
+		kills = 0,
+		required_kills = spec.required_kills or 1,
+	}
 
 	for _, zone in ipairs(spec.visits) do
 		if M.has_visit(account_id, zone) then
@@ -234,14 +281,17 @@ function M.raid_progress(account_id, key)
 		else
 			table.insert(progress.missing, zone)
 		end
+	end
 
-		if M.has_kill(account_id, zone) then
+	for _, npc_type_id in ipairs(spec.bosses) do
+		if M.has_raid_kill(account_id, npc_type_id) then
 			progress.killed = true
+			progress.kills = progress.kills + 1
 
-			-- The EARLIEST kill across the band's zones is the purest one, since
-			-- eras only move forward. Taking the minimum means a later re-kill in
-			-- a further era can never cost a title already earned.
-			local era = M.kill_era(account_id, zone)
+			-- The EARLIEST kill in the band is the purest one, since eras only
+			-- move forward. Taking the minimum means a later re-kill of another
+			-- of its bosses can never cost a title already earned.
+			local era = M.raid_kill_era(account_id, npc_type_id)
 
 			if era ~= nil and (progress.killed_era == nil or era < progress.killed_era) then
 				progress.killed_era = era
@@ -250,7 +300,14 @@ function M.raid_progress(account_id, key)
 	end
 
 	progress.total = #spec.visits
-	progress.complete = (progress.visited >= progress.total) and progress.killed
+
+	-- More than one boss, deliberately. A raid band should not fall to a single
+	-- lucky pull by the same six that clear the level bands, and requiring two
+	-- distinct raid targets is the honest way to say "bring more than a group" -
+	-- HP will not say it, because this server's own Classic raid gates (Nagafen,
+	-- Vox, Trakanon) sit at 32,000 while a later era's trash carries more.
+	progress.complete = (progress.visited >= progress.total)
+		and (progress.kills >= progress.required_kills)
 
 	-- Era-pure: the boss fell while this era was the current one, not on a
 	-- sightseeing trip after the server had moved on.

@@ -67,7 +67,7 @@ local function show(e, account_id)
 
 		if p ~= nil then
 			e.self:Message(MT.Yellow, "  " .. key .. "  visited " .. p.visited .. "/" .. p.total
-				.. ", killed " .. tostring(p.killed)
+				.. ", bosses " .. p.kills .. "/" .. p.required_kills
 				.. ", era-pure " .. tostring(p.era_pure))
 		end
 	end
@@ -104,12 +104,27 @@ local function airaid_explore(e)
 			for _, key in ipairs({
 				"airaid:" .. account_id .. ":visit:" .. zone,
 				"airaid:" .. account_id .. ":kill:" .. zone,
-				"airaid:" .. account_id .. ":killera:" .. zone,
 				"airaid:" .. account_id .. ":char:" .. character_id .. ":paid:" .. zone,
 			}) do
 				if eq.get_data(key) ~= "" then
 					eq.delete_data(key)
 					dropped = dropped + 1
+				end
+			end
+		end
+
+		-- Raid flags are keyed by boss id, so they are not reachable by walking
+		-- zones. Walk the boss index instead.
+		for npc_type_id, boss in pairs(pools.boss_index) do
+			if boss.is_raid then
+				for _, key in ipairs({
+					"airaid:" .. account_id .. ":raidkill:" .. npc_type_id,
+					"airaid:" .. account_id .. ":raidera:" .. npc_type_id,
+				}) do
+					if eq.get_data(key) ~= "" then
+						eq.delete_data(key)
+						dropped = dropped + 1
+					end
 				end
 			end
 		end
@@ -146,11 +161,36 @@ local function airaid_explore(e)
 		e.self:Message(MT.Yellow, "Visited " .. zone .. ".")
 	elseif verb == "kill" then
 		eq.set_data("airaid:" .. account_id .. ":kill:" .. zone, "1")
-		eq.set_data("airaid:" .. account_id .. ":killera:" .. zone,
-			tostring(flags.current_era()))
-		e.self:Message(MT.Yellow, "Killed " .. zone
-			.. "'s boss (era " .. flags.current_era() .. ").")
+
+		-- Raid kills are per BOSS, not per zone, so flag every raid boss this
+		-- zone holds. Setting only the zone flag would leave a raid band looking
+		-- untouched however many times the command was run.
+		local raid_bosses = 0
+
+		for npc_type_id, boss in pairs(pools.boss_index) do
+			if boss.zone == zone and boss.is_raid then
+				eq.set_data("airaid:" .. account_id .. ":raidkill:" .. npc_type_id, "1")
+				eq.set_data("airaid:" .. account_id .. ":raidera:" .. npc_type_id,
+					tostring(flags.current_era()))
+				raid_bosses = raid_bosses + 1
+			end
+		end
+
+		local text = "Killed " .. zone .. "'s boss (era " .. flags.current_era() .. ")."
+
+		if raid_bosses > 0 then
+			text = text .. " " .. raid_bosses .. " raid boss(es) here also flagged."
+		end
+
+		e.self:Message(MT.Yellow, text)
 	elseif verb == "clear" then
+		for npc_type_id, boss in pairs(pools.boss_index) do
+			if boss.zone == zone and boss.is_raid then
+				eq.delete_data("airaid:" .. account_id .. ":raidkill:" .. npc_type_id)
+				eq.delete_data("airaid:" .. account_id .. ":raidera:" .. npc_type_id)
+			end
+		end
+
 		-- The payment record goes too. Leaving it would mean re-earning the
 		-- dungeon and never being paid for it, which is worse than not clearing.
 		for _, key in ipairs({
