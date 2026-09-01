@@ -83,3 +83,40 @@ it against stubbed bindings.
 - **Compass destinations must not be `zone_points.x/y/z`.** That is the inbound
   trigger; landing there zones you straight into the dungeon. Use
   `target_x/y/z` of the route *out*.
+
+## Item scripts: `e.self` is the ITEM
+
+For item events `lua_parser.cpp` pushes the `Lua_ItemInst` as **`self`** and the
+`Client` as **`owner`** — the opposite way round from NPC and player scripts,
+where `self` is the NPC or the client. Treating `e.self` as the player fails
+with *"attempt to call method 'IsEngaged' (a nil value)"* the moment anyone
+clicks the item, and the script dies before doing anything.
+
+An item script is found by `items.scriptfileid` → `script_<id>`, else by
+`CharmFile`, else by the **item id** — so with `scriptfileid = 0` the file is
+`global/items/<itemid>.lua`.
+
+## Handins: claim what you keep, or the engine gives it back
+
+`Items:AlwaysReturnHandins` is true, and `trading.cpp:651` calls
+`ReturnHandinItems()` for anything `EVENT_TRADE` did not claim. So a handler
+that summons a product without claiming the components hands the components back
+as well — the player keeps both.
+
+```lua
+eq.handin({ [16500] = 20, platinum = 20 })   -- what the NPC KEEPS
+```
+
+**Money must match exactly.** `NPC::CheckHandin` compares with `==`, not `>=`.
+Claiming 20pp of a 25pp payment fails the whole handin — and by then `eq.handin`
+has stepped past the engine's catch-all return, so the items are consumed with
+nothing given back. Claim every coin handed over and refund the change yourself.
+
+On a failed claim, return the items **explicitly**; do not rely on the catch-all.
+
+## Zone once after deploying
+
+The bridge's drain loop starts its timer in `event_enter_zone` and
+`event_connect`. A client already sitting in a zone when the scripts land has no
+timer — so no heartbeat, and the deck reports the character as not logged in
+even though they are online and can see their bots.
