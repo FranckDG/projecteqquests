@@ -246,6 +246,17 @@ function M.band_progress(account_id, band)
 		available = 0,
 		done_zones = {},
 		missing = {},
+		-- Who to kill in each still-missing zone, keyed by zone short name.
+		-- Kept SEPARATE from `missing` rather than folded into it: `missing` is
+		-- a list of zone names that callers concatenate, and two of them do
+		-- (Wyn_Farsight.lua and commands/airaid_explore.lua). Changing its
+		-- element type would break both silently.
+		--
+		-- Names come from airaid_pools.lua, which is GENERATED -- they are
+		-- resolved from npc_types at generation time and already display-
+		-- formatted, because the stored form uses underscores for spaces and a
+		-- leading `#` that means nothing to a player.
+		missing_bosses = {},
 	}
 
 	for _, dungeon in ipairs(spec.dungeons) do
@@ -257,6 +268,13 @@ function M.band_progress(account_id, band)
 				table.insert(progress.done_zones, dungeon.zone)
 			else
 				table.insert(progress.missing, dungeon.zone)
+				-- Tolerate a pools file generated before names existed: an
+				-- older airaid_pools.lua simply yields no entry here, and the
+				-- display sites fall back to the bare zone name.
+				if dungeon.names and #dungeon.names > 0 then
+					progress.missing_bosses[dungeon.zone] =
+						table.concat(dungeon.names, " or ")
+				end
 			end
 		end
 	end

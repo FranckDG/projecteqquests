@@ -139,7 +139,16 @@ local function report_band(e, account_id, character_id, band)
 		flags.claim_band(account_id, progress.band)
 		pay_band(e, account_id, character_id, progress)
 	else
-		local text = line .. ". Still to clear: " .. join(progress.missing)
+		-- Name the quarry, not just the place. A zone short name alone tells a
+		-- player where to go and nothing about what finishes it, and the pool
+		-- is keyed on the BOSS kill -- walking the dungeon does not count.
+		local targets = {}
+		for _, zone in ipairs(progress.missing) do
+			local boss = progress.missing_bosses and progress.missing_bosses[zone]
+			table.insert(targets, boss and (zone .. " (" .. boss .. ")") or zone)
+		end
+
+		local text = line .. ". Still to clear: " .. join(targets)
 
 		-- A band whose era has not opened yet cannot be finished however much of
 		-- it you clear - band 50 during Classic shows a pool of one against a

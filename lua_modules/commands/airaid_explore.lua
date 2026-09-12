@@ -57,7 +57,12 @@ local function show(e, account_id)
 			e.self:Message(MT.Yellow, line)
 
 			if #p.missing > 0 then
-				e.self:Message(MT.Yellow, "      missing: " .. table.concat(p.missing, ", "))
+				local targets = {}
+				for _, zone in ipairs(p.missing) do
+					local boss = p.missing_bosses and p.missing_bosses[zone]
+					table.insert(targets, boss and (zone .. " (" .. boss .. ")") or zone)
+				end
+				e.self:Message(MT.Yellow, "      missing: " .. table.concat(targets, ", "))
 			end
 		end
 	end
