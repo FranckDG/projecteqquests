@@ -15,7 +15,7 @@ M.bands = {
 		range = { 10, 20 },
 		reward_level = 20,
 		boss_cap = 25,
-		required = 3,
+		required = 4,
 		dungeons = {
 			{ zone = "crushbone", era = 0, bosses = { 58032 }, names = { "Emperor Crush" } },
 			{ zone = "blackburrow", era = 0, bosses = { 17029, 17032 }, names = { "Lord Elgnub" } },
@@ -27,7 +27,7 @@ M.bands = {
 		range = { 20, 30 },
 		reward_level = 30,
 		boss_cap = 35,
-		required = 3,
+		required = 4,
 		dungeons = {
 			{ zone = "najena", era = 0, bosses = { 44100 }, names = { "Najena" } },
 			{ zone = "guktop", era = 0, bosses = { 65128 }, names = { "the froglok shin lord" } },
@@ -39,7 +39,7 @@ M.bands = {
 		range = { 30, 40 },
 		reward_level = 40,
 		boss_cap = 45,
-		required = 2,
+		required = 3,
 		dungeons = {
 			{ zone = "soldunga", era = 0, bosses = { 31147 }, names = { "Captain Bipnubble" } },
 			{ zone = "paw", era = 0, bosses = { 18122 }, names = { "Tesch Val Kadvem" } },
@@ -76,7 +76,7 @@ M.bands = {
 		range = { 60, 65 },
 		reward_level = 65,
 		boss_cap = 70,
-		required = 4,
+		required = 10,
 		dungeons = {
 			{ zone = "kael", era = 2, bosses = { 113118 }, names = { "Derakor the Vindicator" } },
 			{ zone = "skyshrine", era = 2, bosses = { 114106, 114618 }, names = { "Lord Yelinak" } },
@@ -102,7 +102,7 @@ M.bands = {
 		range = { 65, 70 },
 		reward_level = 70,
 		boss_cap = 75,
-		required = 2,
+		required = 4,
 		dungeons = {
 			{ zone = "codecay", era = 4, bosses = { 200055 }, names = { "Bertoxxulous" } },
 			{ zone = "hohonora", era = 4, bosses = { 211074 }, names = { "Rydda`Dar" } },
@@ -116,7 +116,7 @@ M.bands = {
 		range = { 70, 75 },
 		reward_level = 75,
 		boss_cap = 80,
-		required = 4,
+		required = 8,
 		dungeons = {
 			{ zone = "solrotower", era = 4, bosses = { 212025 }, names = { "Solusek Ro" } },
 			{ zone = "provinggrounds", era = 8, bosses = { 316034 }, names = { "Lightningcaller Vhalek" } },
