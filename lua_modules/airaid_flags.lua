@@ -122,6 +122,96 @@ end
 -- flag names the dungeon the boss belongs to even if something spawns him
 -- somewhere unexpected.
 -- ---------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
+-- SAYING SO.
+--
+-- The write above is silent, and silence is indistinguishable from failure: a
+-- boss whose id is not in the pool looks exactly like a boss whose id is, since
+-- neither produces a word. A player cannot tell "recorded" from "this was never
+-- a band boss" without reading the database. So each account that just earned a
+-- dungeon is told, once.
+--
+-- Both lookups are linear scans of the pools, and both are affordable for the
+-- same reason: record_kill has already returned for every non-boss NPC in the
+-- zone before either can be reached. They run on a hit, not on a death.
+--
+-- The channel is resolved rather than taken from the MT global. MT is real in a
+-- zone's Lua state, but record_kill is reached from global_npc.lua, and this
+-- repo has already lost EVERY Lua hook in a zone for an hour to one nil index
+-- on a global script - see CLAUDE.md. A cosmetic line must not be able to do
+-- that, so a missing MT degrades to the literal Chat::Yellow
+-- (common/eq_constants.h:102) instead of throwing.
+local CHAT_YELLOW = (rawget(_G, "MT") and MT.Yellow) or 15
+
+local function band_for_zone(zone)
+	for band, spec in pairs(pools.bands) do
+		for _, dungeon in ipairs(spec.dungeons) do
+			if dungeon.zone == zone then
+				return band
+			end
+		end
+	end
+end
+
+local function raid_band_for_boss(npc_type_id)
+	for key, spec in pairs(pools.raids) do
+		for _, id in ipairs(spec.bosses) do
+			if id == npc_type_id then
+				return key
+			end
+		end
+	end
+end
+
+-- eq.get_zone_long_name() rather than the pool's short name: record_kill runs
+-- in the zone the boss died in, and "Crushbone" is what the player calls it.
+local function announce_band(client, account_id, zone)
+	local band = band_for_zone(zone)
+
+	if band == nil then
+		return
+	end
+
+	local progress = M.band_progress(account_id, band)
+
+	if progress == nil then
+		return
+	end
+
+	if progress.complete then
+		client:Message(CHAT_YELLOW, string.format(
+			"Explored: %s. Band %d is complete - speak to Wyn Farsight in East Commonlands.",
+			eq.get_zone_long_name(), band))
+	else
+		client:Message(CHAT_YELLOW, string.format(
+			"Explored: %s. Band %d, %d of %d.",
+			eq.get_zone_long_name(), band, progress.done, progress.required))
+	end
+end
+
+local function announce_raid(client, account_id, npc_type_id)
+	local key = raid_band_for_boss(npc_type_id)
+
+	if key == nil then
+		return
+	end
+
+	local progress = M.raid_progress(account_id, key)
+
+	if progress == nil then
+		return
+	end
+
+	if progress.complete then
+		client:Message(CHAT_YELLOW,
+			"A raid target has fallen. This raid band is complete - speak to Wyn Farsight.")
+	else
+		client:Message(CHAT_YELLOW, string.format(
+			"A raid target has fallen. Raid band, %d of %d.",
+			progress.kills, progress.required_kills))
+	end
+end
+
 function M.record_kill(npc_type_id)
 	local boss = pools.boss_index[npc_type_id]
 
@@ -146,6 +236,7 @@ function M.record_kill(npc_type_id)
 			if eq.get_data(key) == "" then
 				eq.set_data(key, "1")
 				credited = credited + 1
+				announce_band(client, account_id, boss.zone)
 			end
 
 			if boss.is_raid then
@@ -153,6 +244,7 @@ function M.record_kill(npc_type_id)
 
 				if eq.get_data(raid_key) == "" then
 					eq.set_data(raid_key, "1")
+					announce_raid(client, account_id, npc_type_id)
 				end
 
 				-- Raid bands pay an era-pure title when the kill happened while
