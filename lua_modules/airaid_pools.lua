@@ -41,7 +41,7 @@ M.bands = {
 		boss_cap = 45,
 		required = 2,
 		dungeons = {
-			{ zone = "soldunga", era = 0, bosses = { 31126 }, names = { "Lord Gimblox" } },
+			{ zone = "soldunga", era = 0, bosses = { 31147 }, names = { "Captain Bipnubble" } },
 			{ zone = "paw", era = 0, bosses = { 18122 }, names = { "Tesch Val Kadvem" } },
 			{ zone = "mistmoore", era = 0, bosses = { 59129 }, names = { "Black Dire" } },
 		},
@@ -224,7 +224,7 @@ M.boss_index = {
 	[17029] = { zone = "blackburrow", is_raid = false },
 	[17032] = { zone = "blackburrow", is_raid = false },
 	[18122] = { zone = "paw", is_raid = false },
-	[31126] = { zone = "soldunga", is_raid = false },
+	[31147] = { zone = "soldunga", is_raid = false },
 	[32062] = { zone = "soldungb", is_raid = false },
 	[36103] = { zone = "befallen", is_raid = false },
 	[39138] = { zone = "hole", is_raid = false },
