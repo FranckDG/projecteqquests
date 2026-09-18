@@ -20,7 +20,7 @@ M.bands = {
 			{ zone = "crushbone", era = 0, bosses = { 58032 }, names = { "Emperor Crush" } },
 			{ zone = "blackburrow", era = 0, bosses = { 17029, 17032 }, names = { "Lord Elgnub" } },
 			{ zone = "befallen", era = 0, bosses = { 36103 }, names = { "Gynok Moltor" } },
-			{ zone = "qcat", era = 0, bosses = { 45094 }, names = { "Bait Masterson" } },
+			{ zone = "beholder", era = 0, bosses = { 16009, 16025 }, names = { "Lord Syrkl" } },
 		},
 	},
 	[20] = {
@@ -219,6 +219,8 @@ M.destinations = {
 -- npc_type id -> { zone = <short name>, is_raid = <bool> }
 M.boss_index = {
 	[11017] = { zone = "runnyeye", is_raid = false },
+	[16009] = { zone = "beholder", is_raid = false },
+	[16025] = { zone = "beholder", is_raid = false },
 	[17029] = { zone = "blackburrow", is_raid = false },
 	[17032] = { zone = "blackburrow", is_raid = false },
 	[18122] = { zone = "paw", is_raid = false },
@@ -227,7 +229,6 @@ M.boss_index = {
 	[36103] = { zone = "befallen", is_raid = false },
 	[39138] = { zone = "hole", is_raid = false },
 	[44100] = { zone = "najena", is_raid = false },
-	[45094] = { zone = "qcat", is_raid = false },
 	[48238] = { zone = "cazicthule", is_raid = true },
 	[58032] = { zone = "crushbone", is_raid = false },
 	[59129] = { zone = "mistmoore", is_raid = false },
@@ -331,6 +332,7 @@ M.visit_index = {
 	["anguish"] = true,
 	["barindu"] = true,
 	["befallen"] = true,
+	["beholder"] = true,
 	["blackburrow"] = true,
 	["cazicthule"] = true,
 	["charasis"] = true,
@@ -375,7 +377,6 @@ M.visit_index = {
 	["potorment"] = true,
 	["povalor"] = true,
 	["provinggrounds"] = true,
-	["qcat"] = true,
 	["qinimi"] = true,
 	["qvic"] = true,
 	["riftseekers"] = true,
