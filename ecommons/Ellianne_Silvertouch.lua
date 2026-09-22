@@ -204,11 +204,22 @@ function event_trade(e)
 	local change = paid - owed
 
 	if change > 0 then
+		-- update_client = true, and it matters more here than anywhere. It
+		-- defaults to FALSE (client.h:902) and SendMoneyUpdate is the only
+		-- thing that refreshes the coin display, while SaveCurrency runs
+		-- either way -- so change handed back without it leaves her visibly
+		-- taking your coin and silently appearing to keep it.
+		--
+		-- Client:GiveCash (client_ext.lua) would also say "You receive ..."
+		-- out loud, but it is installed on the Client class by
+		-- global/script_init.lua and the test harness has no Client class to
+		-- extend, so using it here would make this script untestable.
 		e.other:AddMoneyToPP(
 			change % 10,
 			math.floor(change / 10) % 10,
 			math.floor(change / 100) % 10,
-			math.floor(change / COPPER_PER_PLATINUM)
+			math.floor(change / COPPER_PER_PLATINUM),
+			true
 		)
 	end
 

@@ -71,7 +71,13 @@ local function pay_dungeon(e, account_id, character_id, zone, reward_level)
 	flags.mark_dungeon_paid(account_id, character_id, zone)
 
 	e.other:AddLevelBasedExp(25, reward_level)
-	e.other:AddMoneyToPP(0, 0, 0, reward_level * 2)
+	-- The fifth argument is not optional in practice. AddMoneyToPP's
+	-- update_client defaults to FALSE (client.h:902), and SendMoneyUpdate is
+	-- the only thing that refreshes the coin display. SaveCurrency runs either
+	-- way, so without it the plat lands in the database and the player never
+	-- sees it arrive - which is exactly how this was reported: "I got the charm
+	-- but I never got the 400pp".
+	e.other:AddMoneyToPP(0, 0, 0, reward_level * 2, true)
 
 	tell(e, "  " .. zone .. " - " .. (reward_level * 2) .. "pp and experience.")
 
@@ -86,7 +92,7 @@ local function pay_band(e, account_id, character_id, progress)
 	flags.mark_band_paid(account_id, character_id, progress.band)
 
 	e.other:AddLevelBasedExp(100, progress.reward_level)
-	e.other:AddMoneyToPP(0, 0, 0, progress.reward_level * 20)
+	e.other:AddMoneyToPP(0, 0, 0, progress.reward_level * 20, true)
 	grant_band_title(progress.band)
 
 	-- The charm matches the character's own archetype. Which charm that is comes
