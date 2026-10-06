@@ -64,6 +64,40 @@ local HB_TTL = "30s"
 --- the same scope as the timers driving it.
 local last_heartbeat = {}
 
+--[[
+	The second entry point, and why it is a table of FUNCTIONS.
+
+	Everything queued used to be dispatched as `#bot <value>`, deliberately: the
+	bot parser enforces ownership and access on its own, so the bridge could stay
+	ignorant of what it was carrying. That holds for anything acting on a BOT.
+
+	It does not hold for your own character. ^inventoryremove sources from a bot -
+	ActionableBots::PopulateSBL - so the bot parser has no command that reaches
+	your own bags, and the Armory's "take" on your own rows had nothing to call.
+	#atake (commands/airaid_take.lua) is that command.
+
+	SendGMCommand CANNOT dispatch it, and this is worth writing down because it
+	looks like it should. SendGMCommand calls command_dispatch, which returns -2 for
+	anything absent from the C++ commandlist and stops there. Lua commands are
+	reached from ONE place only: Client::ChannelMessageReceived, which treats that
+	-2 as "try EVENT_COMMAND" and so calls command.lua. Nothing server-side can
+	enter through that door, because it starts at a chat packet.
+
+	So the bridge calls the command's function itself. The table holds the function,
+	not a name, which makes the whole question of "what else could get typed" go
+	away: there is no string being handed to a parser. #zone and the rest of the GM
+	surface are unreachable because they are not in a one-entry table, not because
+	of a filter someone has to remember to update.
+
+	Two rules for anything added here. It must be access 0 - the typed path checks
+	access in command.lua and this path has no such check to offer - and it must act
+	only on e.self, never on a name or id taken from the queue, since the queue
+	identifies the caller and nobody else.
+]]
+local DECK_COMMANDS = {
+	["#atake"] = require("commands/airaid_take"),
+}
+
 local BUCKET_SPAWNED = "airaid:spawned:"
 local BUCKET_CURSOR = "airaid:cursor:"
 
@@ -150,12 +184,43 @@ function bridge.on_timer(e)
 	-- recoverable; a loop that re-fires one is not.
 	eq.delete_data(key)
 
-	-- The queue carries the command without its leading ^, e.g. "follow byname
-	-- Kleric". Anything the player could not type themselves must not become
-	-- typeable here, so the prefix is added on this side and "#bot" is the only
-	-- entry point used: it dispatches through the bot command parser, which
-	-- enforces ownership and every other rule on its own.
-	local ok = e.self:SendGMCommand("#bot " .. pending)
+	-- The queue carries a bot command without its leading ^, e.g. "follow byname
+	-- Kleric", and the prefix is added on this side: "#bot" dispatches through the
+	-- bot command parser, which enforces ownership and every other rule on its
+	-- own. A value that arrives already carrying a # is one of this deck's own
+	-- commands and must be named in DECK_COMMANDS to go anywhere.
+	local ok
+
+	if pending:sub(1, 1) == "#" then
+		local verb, rest = pending:match("^(%S+)%s*(.*)$")
+		local handler = DECK_COMMANDS[verb:lower()]
+
+		if handler then
+			-- command.lua hands its commands e.args as a TABLE OF WORDS, not the
+			-- raw string, so the same shape is built here. The command is shared
+			-- verbatim between this path and the typed one; only the caller differs.
+			local args = {}
+			for word in rest:gmatch("%S+") do
+				args[#args + 1] = word
+			end
+
+			-- pcall because this runs inside the drain timer. An uncaught error in a
+			-- timer callback takes the heartbeat and every later command down with
+			-- it, which would turn one bad argument into a dead bridge.
+			ok = pcall(handler, { self = e.self, args = args })
+
+			if not ok then
+				eq.debug("[airaid_bridge] " .. verb .. " errored on: " .. pending, 1)
+			end
+		else
+			-- Not dispatched at all. Acked as rejected below so the deck gets an
+			-- answer rather than a timeout, and so it shows in the ack trail.
+			ok = false
+			eq.debug("[airaid_bridge] refused unknown # command: " .. pending, 1)
+		end
+	else
+		ok = e.self:SendGMCommand("#bot " .. pending)
+	end
 
 	-- The ack says the queue was drained. It says nothing else, and measurement
 	-- proved that: queueing "definitelynotacommand" also acks "ok", because
