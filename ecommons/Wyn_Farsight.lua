@@ -55,8 +55,22 @@ local function grant_band_title(band)
 	eq.enable_title(900 + band)
 end
 
-local function grant_era_title(era)
-	eq.enable_title(950 + era)
+-- The band says which title it grants; this no longer computes it.
+--
+-- It used to be eq.enable_title(950 + era), which was fine while eras and raid
+-- bands were one to one. Classic has two tiers now and that arithmetic hands both
+-- the same title, so the second would have awarded nothing and looked broken for
+-- no visible reason. pools.spec.mjs names the set, gen-pools.mjs writes it into
+-- airaid_pools.lua, and the arithmetic survives there as the default.
+--
+-- A set with no row in `titles` is a deliberate no-op, not a bug - see migration
+-- 0018. Nine of the eleven bands are in that state today.
+local function grant_raid_title(title_set)
+	if title_set == nil then
+		return
+	end
+
+	eq.enable_title(title_set)
 end
 
 -- ---------------------------------------------------------------------------
@@ -183,7 +197,7 @@ local function report_raid(e, account_id, key)
 
 	if progress.complete then
 		if progress.era_pure then
-			grant_era_title(progress.era)
+			grant_raid_title(progress.title_set)
 			tell(e, "The great powers of this age have fallen to you, and you were "
 				.. "there when it mattered. That is worth a name.")
 		else

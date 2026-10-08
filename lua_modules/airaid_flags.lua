@@ -387,6 +387,11 @@ function M.raid_progress(account_id, key)
 	local progress = {
 		key = key,
 		era = spec.era,
+		-- Which title finishing this band grants. GENERATED per band rather than
+		-- derived from the era here, because Classic has two tiers and `950 + era`
+		-- gives them the same number. The fallback keeps older generated modules
+		-- working if one is ever loaded without the field.
+		title_set = spec.title_set or (950 + spec.era),
 		visited = 0,
 		missing = {},
 		killed = false,

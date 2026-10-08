@@ -74,10 +74,15 @@ local function show_shelf(e, account_id)
 		end
 	end
 
+	-- Offered per ERA, not per band: two bands share era 0, so iterating bands
+	-- would print one identical sigil list twice to anyone who finished both.
+	local eras_offered = {}
+
 	for key, _ in pairs(pools.raids) do
 		local progress = flags.raid_progress(account_id, key)
 
-		if progress ~= nil and progress.complete then
+		if progress ~= nil and progress.complete and not eras_offered[progress.era] then
+			eras_offered[progress.era] = true
 			local parts = {}
 
 			for _, archetype in ipairs(charms.archetype_order) do
@@ -125,15 +130,36 @@ function event_say(e)
 	if archetype and charms.augs[archetype] then
 		era = tonumber(era)
 
-		local progress = nil
+		--[[
+			ANY band of that era earns the era's sigil.
+
+			This used to assign `progress` inside the loop and keep whichever band
+			pairs() yielded last, which was invisible while eras and raid bands were
+			one to one. Classic has two tiers now, both era 0, so the last-write
+			winner depended on unspecified table order: the same player could be
+			sold a sigil or refused one between two hails, for no reason either of
+			us could see.
+
+			"Any" rather than "all" because it matches what the offer list above
+			advertises - that shows the era's sigils as soon as one band of the era
+			is done, and a shop that lists something it then refuses to sell is
+			worse than a generous gate. The sigil belongs to the age; the TITLE is
+			what tells the two tiers apart.
+		]]
+		local earned = false
 
 		for key, spec in pairs(pools.raids) do
 			if spec.era == era then
-				progress = flags.raid_progress(account_id, key)
+				local progress = flags.raid_progress(account_id, key)
+
+				if progress ~= nil and progress.complete then
+					earned = true
+					break
+				end
 			end
 		end
 
-		if progress == nil or not progress.complete then
+		if not earned then
 			tell(e, "You have not earned the sigils of that age.")
 			return
 		end
