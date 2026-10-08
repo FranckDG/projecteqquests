@@ -52,7 +52,7 @@ M.bands = {
 		boss_cap = 55,
 		required = 3,
 		dungeons = {
-			{ zone = "gukbottom", era = 0, bosses = { 66146, 66005, 66159 }, names = { "a frenzied ghoul", "the ghoul lord", "the froglok king" } },
+			{ zone = "gukbottom", era = 0, bosses = { 66159 }, names = { "the froglok king" } },
 			{ zone = "soldungb", era = 0, bosses = { 32062 }, names = { "Efreeti Lord Djarn" } },
 			{ zone = "permafrost", era = 0, bosses = { 73058 }, names = { "a priest of Nagafen" } },
 			{ zone = "kedge", era = 0, bosses = { 64037 }, names = { "Auraline" } },
@@ -235,8 +235,6 @@ M.boss_index = {
 	[63062] = { zone = "unrest", is_raid = false },
 	[64037] = { zone = "kedge", is_raid = false },
 	[65128] = { zone = "guktop", is_raid = false },
-	[66005] = { zone = "gukbottom", is_raid = false },
-	[66146] = { zone = "gukbottom", is_raid = false },
 	[66159] = { zone = "gukbottom", is_raid = false },
 	[71012] = { zone = "airplane", is_raid = true },
 	[71034] = { zone = "airplane", is_raid = true },
