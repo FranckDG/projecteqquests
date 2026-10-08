@@ -43,7 +43,7 @@ M.bands = {
 		dungeons = {
 			{ zone = "soldunga", era = 0, bosses = { 31147 }, names = { "Captain Bipnubble" } },
 			{ zone = "paw", era = 0, bosses = { 18122 }, names = { "Tesch Val Kadvem" } },
-			{ zone = "mistmoore", era = 0, bosses = { 59129 }, names = { "Black Dire" } },
+			{ zone = "mistmoore", era = 0, bosses = { 59152 }, names = { "Xicotl" } },
 		},
 	},
 	[40] = {
@@ -54,8 +54,8 @@ M.bands = {
 		dungeons = {
 			{ zone = "gukbottom", era = 0, bosses = { 66146, 66005, 66159 }, names = { "a frenzied ghoul", "the ghoul lord", "the froglok king" } },
 			{ zone = "soldungb", era = 0, bosses = { 32062 }, names = { "Efreeti Lord Djarn" } },
-			{ zone = "permafrost", era = 0, bosses = { 73039 }, names = { "The Ice Witch" } },
-			{ zone = "kedge", era = 0, bosses = { 64013 }, names = { "Estrella of Gloomwater" } },
+			{ zone = "permafrost", era = 0, bosses = { 73058 }, names = { "a priest of Nagafen" } },
+			{ zone = "kedge", era = 0, bosses = { 64037 }, names = { "Auraline" } },
 		},
 	},
 	[50] = {
@@ -231,9 +231,9 @@ M.boss_index = {
 	[44100] = { zone = "najena", is_raid = false },
 	[48238] = { zone = "cazicthule", is_raid = true },
 	[58032] = { zone = "crushbone", is_raid = false },
-	[59129] = { zone = "mistmoore", is_raid = false },
+	[59152] = { zone = "mistmoore", is_raid = false },
 	[63062] = { zone = "unrest", is_raid = false },
-	[64013] = { zone = "kedge", is_raid = false },
+	[64037] = { zone = "kedge", is_raid = false },
 	[65128] = { zone = "guktop", is_raid = false },
 	[66005] = { zone = "gukbottom", is_raid = false },
 	[66146] = { zone = "gukbottom", is_raid = false },
@@ -241,7 +241,7 @@ M.boss_index = {
 	[71012] = { zone = "airplane", is_raid = true },
 	[71034] = { zone = "airplane", is_raid = true },
 	[72003] = { zone = "fearplane", is_raid = true },
-	[73039] = { zone = "permafrost", is_raid = false },
+	[73058] = { zone = "permafrost", is_raid = false },
 	[76007] = { zone = "hateplane", is_raid = true },
 	[89153] = { zone = "sebilis", is_raid = false },
 	[90174] = { zone = "citymist", is_raid = false },
