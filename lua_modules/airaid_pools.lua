@@ -72,62 +72,98 @@ M.bands = {
 			{ zone = "chardok", era = 1, bosses = { 103056 }, names = { "Overking Bathezid" } },
 		},
 	},
-	[60] = {
-		range = { 60, 65 },
-		reward_level = 65,
-		boss_cap = 70,
-		required = 10,
+}
+
+-- THE LADDER ABOVE LEVEL 50, keyed by expansion rather than by level.
+--
+-- Bands 10-50 are level-keyed because each of those level ranges belongs
+-- to one expansion. Four expansions share the 60-65 cap, so above 50 the
+-- key has to be the expansion or one band swallows all of them - band 60
+-- was 18 dungeons deep and demanded 10 of the 11 that existed at Luclin.
+--
+-- No boss_cap here: the gate is the era, not the level. Solusek Ro is 80.
+M.expansions = {
+	velious = {
+		era = 2,
+		label = "The Scars of Velious",
+		required = 3,
 		dungeons = {
 			{ zone = "kael", era = 2, bosses = { 113118 }, names = { "Derakor the Vindicator" } },
 			{ zone = "skyshrine", era = 2, bosses = { 114106, 114618 }, names = { "Lord Yelinak" } },
-			{ zone = "mischiefplane", era = 2, bosses = { 126012 }, names = { "the Mischievous Jester" } },
 			{ zone = "velketor", era = 2, bosses = { 112025 }, names = { "Velketor the Sorcerer" } },
 			{ zone = "necropolis", era = 2, bosses = { 123149 }, names = { "Vaniki" } },
+			{ zone = "mischiefplane", era = 2, bosses = { 126012 }, names = { "the Mischievous Jester" } },
+		},
+	},
+	luclin = {
+		era = 3,
+		label = "The Shadows of Luclin",
+		required = 4,
+		dungeons = {
 			{ zone = "ssratemple", era = 3, bosses = { 162076 }, names = { "High Priest of Ssraeshza" } },
 			{ zone = "vexthal", era = 3, bosses = { 158069, 158086 }, names = { "Va Xakra" } },
 			{ zone = "akheva", era = 3, bosses = { 179157, 179032 }, names = { "Shei Vinitras" } },
 			{ zone = "thedeep", era = 3, bosses = { 164082 }, names = { "Deklean Korgad" } },
 			{ zone = "katta", era = 3, bosses = { 160135 }, names = { "Nathyn Illuminious" } },
 			{ zone = "acrylia", era = 3, bosses = { 154145 }, names = { "Khati Sha the Twisted" } },
+		},
+	},
+	pop = {
+		era = 4,
+		label = "The Planes of Power",
+		required = 5,
+		dungeons = {
 			{ zone = "podisease", era = 4, bosses = { 205091 }, names = { "Grummus" } },
 			{ zone = "poinnovation", era = 4, bosses = { 206046 }, names = { "Manaetic Behemoth" } },
 			{ zone = "ponightmare", era = 4, bosses = { 204080 }, names = { "Mujaki the Devourer" } },
 			{ zone = "povalor", era = 4, bosses = { 208074 }, names = { "Aerin`Dar" } },
 			{ zone = "potorment", era = 4, bosses = { 207001 }, names = { "Saryrn" } },
-			{ zone = "qinimi", era = 7, bosses = { 281123 }, names = { "Pixtt Tixxrt Kvrok" } },
-			{ zone = "riwwi", era = 7, bosses = { 282105 }, names = { "Taskmistress Krisz" } },
-		},
-	},
-	[65] = {
-		range = { 65, 70 },
-		reward_level = 70,
-		boss_cap = 75,
-		required = 4,
-		dungeons = {
 			{ zone = "codecay", era = 4, bosses = { 200055 }, names = { "Bertoxxulous" } },
 			{ zone = "hohonora", era = 4, bosses = { 211074 }, names = { "Rydda`Dar" } },
 			{ zone = "potactics", era = 4, bosses = { 214026, 214083 }, names = { "Tallon Zek", "Vallon Zek" } },
+			{ zone = "solrotower", era = 4, bosses = { 212025 }, names = { "Solusek Ro" } },
+		},
+	},
+	god = {
+		era = 7,
+		label = "The Gates of Discord",
+		required = 3,
+		dungeons = {
+			{ zone = "qinimi", era = 7, bosses = { 281123 }, names = { "Pixtt Tixxrt Kvrok" } },
+			{ zone = "riwwi", era = 7, bosses = { 282105 }, names = { "Taskmistress Krisz" } },
 			{ zone = "barindu", era = 7, bosses = { 283156 }, names = { "Viarglug" } },
 			{ zone = "vxed", era = 7, bosses = { 290072 }, names = { "Vuranish Xxuro" } },
 			{ zone = "kodtaz", era = 7, bosses = { 293212 }, names = { "Pixtt Grand Summoner" } },
 		},
 	},
-	[70] = {
-		range = { 70, 75 },
-		reward_level = 75,
-		boss_cap = 80,
-		required = 8,
+	omens = {
+		era = 8,
+		label = "Omens of War",
+		required = 3,
 		dungeons = {
-			{ zone = "solrotower", era = 4, bosses = { 212025 }, names = { "Solusek Ro" } },
 			{ zone = "provinggrounds", era = 8, bosses = { 316034 }, names = { "Lightningcaller Vhalek" } },
 			{ zone = "riftseekers", era = 8, bosses = { 334041 }, names = { "King Gelaqua" } },
 			{ zone = "dranikcatacombsc", era = 8, bosses = { 330035 }, names = { "Insidious Dragorn" } },
 			{ zone = "draniksewersc", era = 8, bosses = { 333028 }, names = { "Ukun Sentinel" } },
 			{ zone = "dranikhollowsa", era = 8, bosses = { 318038 }, names = { "Girplan Pathmaker" } },
+		},
+	},
+	don = {
+		era = 9,
+		label = "Dragons of Norrath",
+		required = 3,
+		dungeons = {
 			{ zone = "delvea", era = 9, bosses = { 341063, 341148 }, names = { "Volkara" } },
 			{ zone = "delveb", era = 9, bosses = { 342042, 342114 }, names = { "Gimblax" } },
 			{ zone = "thundercrest", era = 9, bosses = { 340028 }, names = { "Yar`Lir the Living Storm" } },
 			{ zone = "stillmoona", era = 9, bosses = { 338171 }, names = { "Shogurei, Guardian of the Sands" } },
+		},
+	},
+	dodh = {
+		era = 10,
+		label = "Depths of Darkhollow",
+		required = 3,
+		dungeons = {
 			{ zone = "corathus", era = 10, bosses = { 365290 }, names = { "Taskmaster XVII" } },
 			{ zone = "eastkorlach", era = 10, bosses = { 362090 }, names = { "General Veronhar" } },
 			{ zone = "westkorlach", era = 10, bosses = { 358157 }, names = { "General Greglon" } },
@@ -227,10 +263,10 @@ M.destinations = {
 	[30] = { zone = "lavastorm", zone_id = 27, x = 983, y = 1330, z = -78, h = 94, label = "Lavastorm - Solusek's Eye" },
 	[40] = { zone = "everfrost", zone_id = 30, x = -7073, y = 2022, z = -55, h = 136, label = "Everfrost Peaks - Permafrost" },
 	[50] = { zone = "dreadlands", zone_id = 86, x = -1948, y = 702, z = 30, h = 124, label = "Dreadlands - Karnor's Castle" },
-	[60] = { zone = "eastwastes", zone_id = 116, x = 7020, y = -6248, z = -299, h = 381, label = "Eastern Wastes - Kael Drakkel" },
-	[65] = { zone = "potranquility", zone_id = 203, x = -192, y = -8, z = -628, h = 294, label = "Plane of Tranquility - Halls of Honor" },
-	[70] = { zone = "wallofslaughter", zone_id = 300, x = -1696, y = 1980, z = 109, h = 128, label = "Wall of Slaughter - the Proving Grounds" },
 	hub = { zone = "ecommons", zone_id = 22, x = -291, y = -1546, z = 3.75, h = 254, label = "East Commonlands - the Cartographer" },
+	velious = { zone = "eastwastes", zone_id = 116, x = 7020, y = -6248, z = -299, h = 381, label = "Eastern Wastes - Kael Drakkel" },
+	pop = { zone = "potranquility", zone_id = 203, x = -192, y = -8, z = -628, h = 294, label = "Plane of Tranquility - Halls of Honor" },
+	omens = { zone = "wallofslaughter", zone_id = 300, x = -1696, y = 1980, z = 109, h = 128, label = "Wall of Slaughter - the Proving Grounds" },
 }
 
 -- npc_type id -> { zone = <short name>, is_raid = <bool> }
