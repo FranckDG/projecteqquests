@@ -455,6 +455,12 @@ function M.line_progress(account_id, key)
 		era = spec.era,
 		required = spec.required,
 		reward_level = spec.reward_level,
+		-- Carried through because pay_line grants it. Leaving it out made
+		-- grant_line_title see nil and return early, so a finished line paid its
+		-- plat and its charm and silently awarded no title at all - which is
+		-- precisely the shape of failure an explicit title_set exists to avoid,
+		-- arrived at from the other end.
+		title_set = spec.title_set,
 		done = 0,
 		available = 0,
 		done_zones = {},

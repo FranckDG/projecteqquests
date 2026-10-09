@@ -74,6 +74,29 @@ local function show_shelf(e, account_id)
 		end
 	end
 
+	-- The expansion lines, which continue the shelf above band 50. Same shape,
+	-- keyed by line instead of band, and in era order for the same reason.
+	for _, line_key in ipairs(flags.line_keys()) do
+		if flags.line_claimed(account_id, line_key) then
+			local parts = {}
+
+			for _, key in ipairs(charms.archetype_order) do
+				local item_id = charms.line_charms and charms.line_charms[key]
+					and charms.line_charms[key][line_key]
+
+				if item_id then
+					table.insert(parts,
+						offer(key .. " " .. line_key, charms.archetype_name[key]))
+				end
+			end
+
+			if #parts > 0 then
+				tell(e, pools.expansions[line_key].label .. ": " .. table.concat(parts, "  "))
+				shown = shown + 1
+			end
+		end
+	end
+
 	-- Offered per ERA, not per band: two bands share era 0, so iterating bands
 	-- would print one identical sigil list twice to anyone who finished both.
 	local eras_offered = {}
@@ -176,6 +199,37 @@ function event_say(e)
 	end
 
 	-- "<archetype> <band>"
+	--[[
+		"<archetype> <line>", e.g. "bulwark velious".
+
+		Checked BEFORE the band pattern, and the two cannot be confused: a band is
+		digits and a line is letters, so `%d+` and `%a+` partition the space. The
+		order still matters for a different reason - the band branch returns early
+		on an unclaimed band, so if it ran first a line name would fall through
+		`tonumber` as nil and be reported as "you have not earned band nil".
+	]]
+	local arch, line_key = message:match("^(%a+)%s+(%a+)$")
+
+	if arch and charms.line_charms and charms.line_charms[arch]
+			and pools.expansions[line_key] then
+		if not flags.line_claimed(account_id, line_key) then
+			tell(e, "You have not earned " .. pools.expansions[line_key].label
+				.. ". Wyn will tell you what is left.")
+			return
+		end
+
+		local item_id = charms.line_charms[arch][line_key]
+
+		if item_id == nil then
+			tell(e, "I keep no charm of that age.")
+			return
+		end
+
+		issue(e, item_id, charms.archetype_name[arch] .. " charm of "
+			.. pools.expansions[line_key].label)
+		return
+	end
+
 	local key, band = message:match("^(%a+)%s+(%d+)$")
 
 	if key and charms.charms[key] then

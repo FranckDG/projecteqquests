@@ -55,6 +55,27 @@ local function grant_band_title(band)
 	eq.enable_title(900 + band)
 end
 
+--[[
+	An expansion line's title. The line NAMES its set; this does not compute one.
+
+	Band titles are 900 + band, and that arithmetic is why band 50 points at 950 -
+	which is the Classic raid band's "the Godslayer", not a band title at all.
+	Nobody has hit it because band 50 needs Kunark, but it is the failure mode of
+	deriving an id that has to exist as a row: the formula cannot tell you the row
+	is missing or belongs to someone else.
+
+	So the lines carry theirs in pools.spec.mjs, migration 0042 inserts exactly
+	those ids, and a line with no row would grant a set nothing uses - visibly
+	nothing, rather than someone else's title.
+]]
+local function grant_line_title(title_set)
+	if title_set == nil then
+		return
+	end
+
+	eq.enable_title(title_set)
+end
+
 -- The band says which title it grants; this no longer computes it.
 --
 -- It used to be eq.enable_title(950 + era), which was fine while eras and raid
@@ -134,6 +155,89 @@ end
 -- ---------------------------------------------------------------------------
 -- Reporting.
 -- ---------------------------------------------------------------------------
+
+--[[
+	Paying for a finished expansion line.
+
+	Deliberately the same shape and the same amounts as pay_band - a level of
+	experience at the line's reward level, 20pp per level of it, a title and the
+	archetype's charm - because a line IS the band at that point in the ladder,
+	not a different kind of reward.
+
+	The charm comes from charms.line_charms rather than charms.charms. Those are
+	separate tables on purpose: a line key and a band number could not collide,
+	but one lookup that takes either would quietly return nil for a typo instead
+	of failing, and the whole reason the archetype is derived from the class
+	bitmask is to make "wrong charm" impossible rather than unlikely.
+]]
+local function pay_line(e, account_id, character_id, progress)
+	if flags.line_paid(account_id, character_id, progress.line) then
+		return false
+	end
+
+	flags.mark_line_paid(account_id, character_id, progress.line)
+
+	e.other:AddLevelBasedExp(100, progress.reward_level)
+	e.other:AddMoneyToPP(0, 0, 0, progress.reward_level * 20, true)
+	grant_line_title(progress.title_set)
+
+	local archetype = charms.archetype_for_class[e.other:GetClass()]
+	local item_id = archetype and charms.line_charms and charms.line_charms[archetype]
+		and charms.line_charms[archetype][progress.line]
+
+	if item_id then
+		e.other:SummonItem(item_id)
+		tell(e, progress.label .. " complete. "
+			.. (progress.reward_level * 20) .. "pp, a level of experience, and a "
+			.. charms.archetype_name[archetype] .. " charm.")
+	else
+		-- Should be unreachable: every class maps to an archetype and every line
+		-- has a charm. Say so rather than paying silently and losing the charm.
+		tell(e, progress.label .. " complete, but I have no charm for your calling. "
+			.. "Tell Brask - that is not supposed to happen.")
+	end
+
+	return true
+end
+
+local function report_line(e, account_id, character_id, key)
+	local progress = flags.line_progress(account_id, key)
+
+	-- available == 0 means the expansion has not opened. Saying nothing is right:
+	-- a line is all-or-nothing on era, so there is no partial progress to report
+	-- and listing seven ages a player cannot reach yet would bury the one he can.
+	if progress == nil or progress.available == 0 then
+		return
+	end
+
+	for _, zone in ipairs(progress.done_zones) do
+		pay_dungeon(e, account_id, character_id, zone, progress.reward_level)
+	end
+
+	local claimed = flags.line_claimed(account_id, progress.line)
+	local line = progress.label .. ": " .. progress.done .. " of " .. progress.required
+
+	if claimed then
+		tell(e, line .. " - claimed.")
+	elseif progress.complete then
+		flags.claim_line(account_id, progress.line)
+		pay_line(e, account_id, character_id, progress)
+	else
+		local targets = {}
+		for _, zone in ipairs(progress.missing) do
+			local boss = progress.missing_bosses and progress.missing_bosses[zone]
+			table.insert(targets, boss and (zone .. " (" .. boss .. ")") or zone)
+		end
+
+		tell(e, line .. ". Still to clear: " .. join(targets))
+	end
+
+	-- A line already claimed on the account still owes THIS character its payout
+	-- the first time it hails - the same per-character rule as the bands.
+	if claimed then
+		pay_line(e, account_id, character_id, progress)
+	end
+end
 
 local function report_band(e, account_id, character_id, band)
 	local progress = flags.band_progress(account_id, band)
@@ -240,6 +344,12 @@ function event_say(e)
 
 	for _, band in ipairs(flags.band_numbers()) do
 		report_band(e, account_id, character_id, band)
+	end
+
+	-- The lines come after the bands because they continue the same ladder above
+	-- level 50, and in era order so they read as a progression.
+	for _, key in ipairs(flags.line_keys()) do
+		report_line(e, account_id, character_id, key)
 	end
 
 	for key, _ in pairs(pools.raids) do

@@ -87,6 +87,7 @@ M.expansions = {
 		era = 2,
 		label = "The Scars of Velious",
 		reward_level = 60,
+		title_set = 972,
 		required = 3,
 		dungeons = {
 			{ zone = "kael", era = 2, bosses = { 113118 }, names = { "Derakor the Vindicator" } },
@@ -100,6 +101,7 @@ M.expansions = {
 		era = 3,
 		label = "The Shadows of Luclin",
 		reward_level = 60,
+		title_set = 973,
 		required = 4,
 		dungeons = {
 			{ zone = "ssratemple", era = 3, bosses = { 162076 }, names = { "High Priest of Ssraeshza" } },
@@ -114,6 +116,7 @@ M.expansions = {
 		era = 4,
 		label = "The Planes of Power",
 		reward_level = 65,
+		title_set = 974,
 		required = 5,
 		dungeons = {
 			{ zone = "podisease", era = 4, bosses = { 205091 }, names = { "Grummus" } },
@@ -131,6 +134,7 @@ M.expansions = {
 		era = 7,
 		label = "The Gates of Discord",
 		reward_level = 65,
+		title_set = 977,
 		required = 3,
 		dungeons = {
 			{ zone = "qinimi", era = 7, bosses = { 281123 }, names = { "Pixtt Tixxrt Kvrok" } },
@@ -144,6 +148,7 @@ M.expansions = {
 		era = 8,
 		label = "Omens of War",
 		reward_level = 70,
+		title_set = 978,
 		required = 3,
 		dungeons = {
 			{ zone = "provinggrounds", era = 8, bosses = { 316034 }, names = { "Lightningcaller Vhalek" } },
@@ -157,6 +162,7 @@ M.expansions = {
 		era = 9,
 		label = "Dragons of Norrath",
 		reward_level = 70,
+		title_set = 979,
 		required = 3,
 		dungeons = {
 			{ zone = "delvea", era = 9, bosses = { 341063, 341148 }, names = { "Volkara" } },
@@ -169,6 +175,7 @@ M.expansions = {
 		era = 10,
 		label = "Depths of Darkhollow",
 		reward_level = 70,
+		title_set = 980,
 		required = 3,
 		dungeons = {
 			{ zone = "corathus", era = 10, bosses = { 365290 }, names = { "Taskmaster XVII" } },
