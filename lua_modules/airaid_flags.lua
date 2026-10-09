@@ -153,6 +153,21 @@ local function band_for_zone(zone)
 	end
 end
 
+-- Which expansion line holds this zone, if any.
+--
+-- A zone belongs to exactly ONE of the two ladders - bands 10-50 are Classic and
+-- Kunark, the lines are Velious onward - so these two lookups can never both
+-- answer, and the kill hook tries each in turn.
+local function line_for_zone(zone)
+	for key, spec in pairs(pools.expansions) do
+		for _, dungeon in ipairs(spec.dungeons) do
+			if dungeon.zone == zone then
+				return key
+			end
+		end
+	end
+end
+
 local function raid_band_for_boss(npc_type_id)
 	for key, spec in pairs(pools.raids) do
 		for _, id in ipairs(spec.bosses) do
@@ -187,6 +202,40 @@ local function announce_band(client, account_id, zone)
 			"Explored: %s. Band %d, %d of %d.",
 			eq.get_zone_long_name(), band, progress.done, progress.required))
 	end
+end
+
+-- The expansion's own name rather than "Band velious", which is what a key looks
+-- like and not what a player calls a place.
+local function announce_line(client, account_id, zone)
+	local key = line_for_zone(zone)
+
+	if key == nil then
+		return
+	end
+
+	local progress = M.line_progress(account_id, key)
+
+	if progress == nil then
+		return
+	end
+
+	if progress.complete then
+		client:Message(CHAT_YELLOW, string.format(
+			"Explored: %s. %s is complete - speak to Wyn Farsight in East Commonlands.",
+			eq.get_zone_long_name(), progress.label))
+	else
+		client:Message(CHAT_YELLOW, string.format(
+			"Explored: %s. %s, %d of %d.",
+			eq.get_zone_long_name(), progress.label, progress.done, progress.required))
+	end
+end
+
+-- One dungeon kill, announced against whichever ladder owns the zone. Both are
+-- tried because a zone is in exactly one of them and neither lookup knows about
+-- the other.
+local function announce_dungeon(client, account_id, zone)
+	announce_band(client, account_id, zone)
+	announce_line(client, account_id, zone)
 end
 
 local function announce_raid(client, account_id, npc_type_id)
@@ -236,7 +285,7 @@ function M.record_kill(npc_type_id)
 			if eq.get_data(key) == "" then
 				eq.set_data(key, "1")
 				credited = credited + 1
-				announce_band(client, account_id, boss.zone)
+				announce_dungeon(client, account_id, boss.zone)
 			end
 
 			if boss.is_raid then
@@ -376,6 +425,69 @@ function M.band_progress(account_id, band)
 	return progress
 end
 
+--[[
+	An expansion line's progress. Deliberately the same shape as band_progress,
+	because Wyn and the explore command walk both and should not need to care
+	which ladder they are looking at.
+
+	Two differences, and both are the point of the lines existing:
+
+	  - `label` instead of a band number. "The Scars of Velious" is what a player
+	    calls the place; `velious` is a table key.
+	  - EVERY dungeon in a line shares the line's era, so the availability check
+	    is all-or-nothing: a line reports 0 available until its expansion opens,
+	    then all of it at once. A band could be half-open - band 50 has Kunark
+	    dungeons and The Hole, which is Classic - and that asymmetry is why the
+	    era check stays per dungeon here rather than being hoisted to the line.
+	    It costs one comparison and survives a line ever being mixed.
+]]
+function M.line_progress(account_id, key)
+	local spec = pools.expansions[key]
+
+	if spec == nil then
+		return nil
+	end
+
+	local era = current_era()
+	local progress = {
+		line = key,
+		label = spec.label,
+		era = spec.era,
+		required = spec.required,
+		reward_level = spec.reward_level,
+		done = 0,
+		available = 0,
+		done_zones = {},
+		missing = {},
+		-- Same contract as band_progress: `missing` stays a list of zone names
+		-- that callers concatenate, and the bosses ride alongside it keyed by
+		-- zone rather than folded in.
+		missing_bosses = {},
+	}
+
+	for _, dungeon in ipairs(spec.dungeons) do
+		if dungeon.era <= era then
+			progress.available = progress.available + 1
+
+			if M.dungeon_done(account_id, dungeon.zone) then
+				progress.done = progress.done + 1
+				table.insert(progress.done_zones, dungeon.zone)
+			else
+				table.insert(progress.missing, dungeon.zone)
+
+				if dungeon.names and #dungeon.names > 0 then
+					progress.missing_bosses[dungeon.zone] =
+						table.concat(dungeon.names, " or ")
+				end
+			end
+		end
+	end
+
+	progress.complete = progress.done >= spec.required
+
+	return progress
+end
+
 -- Raid bands want every listed zone visited and any one of the bosses dead.
 function M.raid_progress(account_id, key)
 	local spec = pools.raids[key]
@@ -482,6 +594,42 @@ function M.mark_band_paid(account_id, character_id, band)
 	eq.set_data(paid_band_key(account_id, character_id, band), "1")
 end
 
+--[[
+	The same two records for an expansion line, under `line:` rather than `band:`.
+
+	A line key is never numeric and a band is always numeric, so `band:velious`
+	could not actually have collided with anything - but a key that says what it
+	is beats one that merely cannot clash, and these are read by eye when
+	something goes wrong.
+
+	The per-DUNGEON payment record is shared with the bands and stays that way on
+	purpose: it is keyed by zone, and a zone now belongs to exactly one band or
+	one line, so there is nothing to disambiguate.
+]]
+local function line_key(account_id, key)
+	return "airaid:" .. account_id .. ":line:" .. key
+end
+
+local function paid_line_key(account_id, character_id, key)
+	return "airaid:" .. account_id .. ":char:" .. character_id .. ":paid:line:" .. key
+end
+
+function M.line_claimed(account_id, key)
+	return eq.get_data(line_key(account_id, key)) ~= ""
+end
+
+function M.claim_line(account_id, key)
+	eq.set_data(line_key(account_id, key), "1")
+end
+
+function M.line_paid(account_id, character_id, key)
+	return eq.get_data(paid_line_key(account_id, character_id, key)) ~= ""
+end
+
+function M.mark_line_paid(account_id, character_id, key)
+	eq.set_data(paid_line_key(account_id, character_id, key), "1")
+end
+
 -- Bands in ascending order. pairs() over a table with numeric keys gives no
 -- order at all, and a Cartographer that lists bands differently every hail looks
 -- broken even though it is only unordered.
@@ -495,6 +643,25 @@ function M.band_numbers()
 	table.sort(numbers)
 
 	return numbers
+end
+
+-- Expansion lines in era order, for the same reason band_numbers sorts: pairs()
+-- over a string-keyed table gives no order at all, and a Cartographer that lists
+-- the expansions differently on every hail looks broken when it is only
+-- unordered. Sorted by ERA rather than by name, so they read as a progression
+-- instead of alphabetically with Darkhollow first.
+function M.line_keys()
+	local keys = {}
+
+	for key, _ in pairs(pools.expansions) do
+		table.insert(keys, key)
+	end
+
+	table.sort(keys, function(a, b)
+		return pools.expansions[a].era < pools.expansions[b].era
+	end)
+
+	return keys
 end
 
 M.current_era = current_era
