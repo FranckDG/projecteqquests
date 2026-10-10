@@ -50,7 +50,7 @@ M.bands = {
 		range = { 40, 50 },
 		reward_level = 50,
 		boss_cap = 55,
-		required = 3,
+		required = 4,
 		dungeons = {
 			{ zone = "gukbottom", era = 0, bosses = { 66159 }, names = { "the froglok king" } },
 			{ zone = "soldungb", era = 0, bosses = { 32062 }, names = { "Efreeti Lord Djarn" } },
@@ -62,7 +62,7 @@ M.bands = {
 		range = { 50, 60 },
 		reward_level = 60,
 		boss_cap = 65,
-		required = 4,
+		required = 6,
 		dungeons = {
 			{ zone = "hole", era = 0, bosses = { 39138 }, names = { "Master Yael" } },
 			{ zone = "karnor", era = 1, bosses = { 102103 }, names = { "a Drolvarg warlord" } },
@@ -88,7 +88,7 @@ M.expansions = {
 		label = "The Scars of Velious",
 		reward_level = 60,
 		title_set = 972,
-		required = 3,
+		required = 5,
 		dungeons = {
 			{ zone = "kael", era = 2, bosses = { 113118 }, names = { "Derakor the Vindicator" } },
 			{ zone = "skyshrine", era = 2, bosses = { 114106, 114618 }, names = { "Lord Yelinak" } },
@@ -102,7 +102,7 @@ M.expansions = {
 		label = "The Shadows of Luclin",
 		reward_level = 60,
 		title_set = 973,
-		required = 4,
+		required = 6,
 		dungeons = {
 			{ zone = "ssratemple", era = 3, bosses = { 162076 }, names = { "High Priest of Ssraeshza" } },
 			{ zone = "vexthal", era = 3, bosses = { 158069, 158086 }, names = { "Va Xakra" } },
@@ -117,7 +117,7 @@ M.expansions = {
 		label = "The Planes of Power",
 		reward_level = 65,
 		title_set = 974,
-		required = 5,
+		required = 9,
 		dungeons = {
 			{ zone = "podisease", era = 4, bosses = { 205091 }, names = { "Grummus" } },
 			{ zone = "poinnovation", era = 4, bosses = { 206046 }, names = { "Manaetic Behemoth" } },
@@ -135,7 +135,7 @@ M.expansions = {
 		label = "The Gates of Discord",
 		reward_level = 65,
 		title_set = 977,
-		required = 3,
+		required = 5,
 		dungeons = {
 			{ zone = "qinimi", era = 7, bosses = { 281123 }, names = { "Pixtt Tixxrt Kvrok" } },
 			{ zone = "riwwi", era = 7, bosses = { 282105 }, names = { "Taskmistress Krisz" } },
@@ -149,7 +149,7 @@ M.expansions = {
 		label = "Omens of War",
 		reward_level = 70,
 		title_set = 978,
-		required = 3,
+		required = 5,
 		dungeons = {
 			{ zone = "provinggrounds", era = 8, bosses = { 316034 }, names = { "Lightningcaller Vhalek" } },
 			{ zone = "riftseekers", era = 8, bosses = { 334041 }, names = { "King Gelaqua" } },
@@ -163,7 +163,7 @@ M.expansions = {
 		label = "Dragons of Norrath",
 		reward_level = 70,
 		title_set = 979,
-		required = 3,
+		required = 4,
 		dungeons = {
 			{ zone = "delvea", era = 9, bosses = { 341063, 341148 }, names = { "Volkara" } },
 			{ zone = "delveb", era = 9, bosses = { 342042, 342114 }, names = { "Gimblax" } },
@@ -176,7 +176,7 @@ M.expansions = {
 		label = "Depths of Darkhollow",
 		reward_level = 70,
 		title_set = 980,
-		required = 3,
+		required = 5,
 		dungeons = {
 			{ zone = "corathus", era = 10, bosses = { 365290 }, names = { "Taskmaster XVII" } },
 			{ zone = "eastkorlach", era = 10, bosses = { 362090 }, names = { "General Veronhar" } },
