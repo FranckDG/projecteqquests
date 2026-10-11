@@ -274,7 +274,7 @@ M.raids = {
 M.destinations = {
 	[10] = { zone = "qeytoqrg", zone_id = 4, x = -1155, y = 3431, z = 4, h = 260, label = "Qeynos Hills - Blackburrow" },
 	[20] = { zone = "innothule", zone_id = 46, x = -812, y = 172, z = -7, h = 65, label = "Innothule Swamp - Guk" },
-	[30] = { zone = "lavastorm", zone_id = 27, x = 983, y = 1330, z = -78, h = 94, label = "Lavastorm - Solusek's Eye" },
+	[30] = { zone = "southkarana", zone_id = 14, x = 1156, y = -8563, z = 4, h = 0, label = "South Karana - south end, by Lake Rathetear" },
 	[40] = { zone = "everfrost", zone_id = 30, x = -7073, y = 2022, z = -55, h = 136, label = "Everfrost Peaks - Permafrost" },
 	[50] = { zone = "dreadlands", zone_id = 86, x = -1948, y = 702, z = 30, h = 124, label = "Dreadlands - Karnor's Castle" },
 	hub = { zone = "ecommons", zone_id = 22, x = -291, y = -1546, z = 3.75, h = 254, label = "East Commonlands - the Cartographer" },
