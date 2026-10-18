@@ -258,7 +258,7 @@ function event_trade(e)
 	-- Before anything is consumed. INVALID_INDEX is -1; try_cursor is false on
 	-- purpose, because the cursor is where a refusal would already be putting
 	-- things back.
-	local free = e.other:GetInv():FindFreeSlot(false, false, 1, false)
+	local free = e.other:GetInventory():FindFreeSlot(false, false, 1, false)
 
 	if free == nil or free < 0 then
 		refuse(e, "Your bags are full. I will not take pages I cannot pay you for.")
